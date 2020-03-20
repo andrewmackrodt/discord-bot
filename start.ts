@@ -11,6 +11,7 @@ const token: string = process.env.DISCORD_TOKEN!
 const plugins: Plugin[] = [
     require('./src/plugins/fortune').default,
     require('./src/plugins/scooter').default,
+    require('./src/plugins/xkcd').default,
 ]
 
 ;(async () => {
