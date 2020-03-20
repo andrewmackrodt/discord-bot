@@ -12,7 +12,7 @@ const lyrics = [
 
 const plugin: Plugin = async (msg: Message, next: NextFunction): Promise<any> => {
     if (msg.content.match(/!scooter/i) === null) {
-        return await next()
+        return next()
     }
 
     const index = Math.round(Math.random() * (lyrics.length - 1))

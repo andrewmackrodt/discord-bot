@@ -10,7 +10,7 @@ interface FortuneResponse {
 
 const plugin: Plugin = async (msg: Message, next: NextFunction): Promise<any> => {
     if (msg.content.match(/!fortune/i) === null) {
-        return await next()
+        return next()
     }
 
     const response = await axios.get<FortuneResponse>(url)
