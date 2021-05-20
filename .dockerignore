@@ -1,0 +1,8 @@
+*
+!assets/
+!src/
+!types/
+!index.ts
+!package.json
+!package-lock.json
+!tsconfig.json
