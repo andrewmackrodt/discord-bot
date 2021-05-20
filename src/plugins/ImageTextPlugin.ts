@@ -62,7 +62,10 @@ const images: Record<string, Image> = {
 }
 
 const gm = subClass({ imageMagick: true })
-const imagesPath = path.resolve(__dirname, '../../assets/images')
+const assetsPath = path.resolve(__dirname, '../../assets')
+const fontsPath = path.resolve(assetsPath, 'fonts')
+const fontPath = path.resolve(fontsPath, 'NotoSans/NotoSans-Regular.ttf')
+const imagesPath = path.resolve(assetsPath, 'images')
 const regExp = new RegExp('^!(' + Object.keys(images).join('|') + ')')
 
 export default class ImageTextPlugin implements Plugin {
@@ -89,7 +92,7 @@ export default class ImageTextPlugin implements Plugin {
         const srcImagePath = path.resolve(imagesPath, image.filename)
 
         let state = gm(srcImagePath)
-            .font('Ubuntu')
+            .font(fontPath)
             .background('none')
             .fill(image.fill)
             .gravity('Center')
