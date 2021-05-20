@@ -56,7 +56,7 @@ export class Client {
             return
         }
 
-        const dispatch = (plugin: OnMessagePlugin): Promise<any> => {
+        const dispatch = async (plugin: OnMessagePlugin): Promise<any> => {
             return plugin.onMessage(message, async (err?: string | Error): Promise<any> => {
                 if ( ! err) {
                     const sibling = stack.shift()
@@ -69,6 +69,10 @@ export class Client {
             })
         }
 
-        return dispatch(stack.shift()!)
+        try {
+            await dispatch(stack.shift()!)
+        } catch (err) {
+            console.error(err)
+        }
     }
 }
