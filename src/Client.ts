@@ -1,7 +1,9 @@
-import { MessageHandler, Plugin } from '../types/plugins'
+import { Plugin } from '../types/plugins'
 import Discord, { Message } from 'discord.js'
 
 type ErrorType = Error | string
+
+type OnMessagePlugin = Plugin & Required<Pick<Plugin, 'onMessage'>>
 
 export class Client {
     private _client?: Discord.Client
@@ -48,18 +50,18 @@ export class Client {
             return
         }
 
-        const stack = this.plugins.filter(x => x.onMessage) as (Plugin & Required<Pick<Plugin, 'onMessage'>>)[]
+        const stack = this.plugins.filter(x => x.onMessage) as OnMessagePlugin[]
 
         if (stack.length === 0) {
             return
         }
 
-        const dispatch = (plugin: MessageHandler): Promise<any> => {
-            return plugin(message, async (err?: string | Error): Promise<any> => {
+        const dispatch = (plugin: OnMessagePlugin): Promise<any> => {
+            return plugin.onMessage(message, async (err?: string | Error): Promise<any> => {
                 if ( ! err) {
                     const sibling = stack.shift()
                     if (sibling) {
-                        return dispatch(sibling.onMessage)
+                        return dispatch(sibling)
                     }
                 } else {
                     console.error(err)
@@ -67,6 +69,6 @@ export class Client {
             })
         }
 
-        return dispatch(stack.shift()!.onMessage)
+        return dispatch(stack.shift()!)
     }
 }
