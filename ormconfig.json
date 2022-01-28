@@ -1,0 +1,20 @@
+{
+   "type": "better-sqlite3",
+   "database": "./config/scratchmo.db",
+   "synchronize": false,
+   "logging": false,
+   "entities": [
+      "src/models/**/*.{ts,js}"
+   ],
+   "migrations": [
+      "src/migrations/**/*.{ts,js}"
+   ],
+   "subscribers": [
+      "src/subscribers/**/*.{ts,js}"
+   ],
+   "cli": {
+      "entitiesDir": "src/models",
+      "migrationsDir": "src/migrations",
+      "subscribersDir": "src/subscriber"
+   }
+}

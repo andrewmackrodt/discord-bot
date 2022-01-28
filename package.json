@@ -14,7 +14,7 @@
     "build:deps": "npm ci --silent --no-progress --production --prefix=dist/",
     "dist": "npm-run-all clean dist:bundle dist:copy dist:package",
     "dist:bundle": "tsc --sourcemap --outDir dist/",
-    "dist:copy": "shx cp -r \"assets/\" \"package*.json\" dist/",
+    "dist:copy": "shx cp -r \"assets/\" \"ormconfig*.json\" \"package*.json\" dist/",
     "dist:package": "npm-run-all dist:package:json dist:package:lock",
     "dist:package:json": "json -q -e 'this.scripts = {\"start\":\"node index\"}; delete this.devDependencies' -f dist/package.json -I",
     "dist:package:lock": "npm i --silent --no-progress --package-lock-only --prefix=dist/",
@@ -28,16 +28,20 @@
   },
   "dependencies": {
     "axios": "^0.25.0",
+    "better-sqlite3": "^7.5.0",
     "cheerio": "^1.0.0-rc.10",
     "discord.js": "^12.5.3",
     "dotenv": "^14.3.2",
     "glob": "^7.2.0",
     "gm": "^1.23.1",
+    "reflect-metadata": "^0.1.13",
     "spotify-web-api-node": "^5.0.2",
     "tslib": "^2.3.1",
-    "twitter-api-client": "^1.5.1"
+    "twitter-api-client": "^1.5.1",
+    "typeorm": "^0.2.41"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.4.2",
     "@types/cheerio": "^0.22.30",
     "@types/glob": "^7.2.0",
     "@types/gm": "^1.18.11",

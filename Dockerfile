@@ -15,5 +15,8 @@ FROM node:14-alpine
 RUN apk add --no-cache font-noto graphicsmagick imagemagick tini
 COPY --from=dist /opt/app/dist/ /opt/app
 WORKDIR /opt/app
+RUN mkdir -p /config \
+ && ln -s /config /opt/app/config
+VOLUME /config
 ENV NODE_ENV=production
 ENTRYPOINT ["/sbin/tini", "--", "node", "index"]

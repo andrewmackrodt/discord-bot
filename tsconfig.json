@@ -6,12 +6,12 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "lib": [
-      "es2020"
+      "es2018"
     ],
     "module": "commonjs",
     "moduleResolution": "node",
     "strict": true,
-    "target": "es2019"
+    "target": "es2018"
   },
   "include": [
     "./src/**/*",

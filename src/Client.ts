@@ -1,5 +1,6 @@
 import { Plugin } from '../types/plugins'
 import Discord, { Message, MessageReaction, PartialUser, User } from 'discord.js'
+import { Connection, createConnection } from 'typeorm'
 
 type ErrorType = Error | string
 
@@ -23,7 +24,8 @@ const forward = <T extends Plugin>(dispatch: (plugin: T) => any, stack: T[]) => 
 }
 
 export class Client {
-    private _client?: Discord.Client
+    protected readonly client = new Discord.Client()
+    protected db?: Connection
 
     public constructor(
         protected readonly token: string,
@@ -31,22 +33,43 @@ export class Client {
     ) {
     }
 
-    protected get client(): Discord.Client {
-        if ( ! this._client) {
-            this._client = new Discord.Client()
-        }
-
-        return this._client
-    }
-
     public async start(): Promise<void> {
+        // gracefully close connections on exit
+        process.on('SIGINT', this.cleanup)
+
+        // create database connection and run migrations
+        this.db = await createConnection()
+        await this.db.runMigrations()
+
+        // assign handler functions
         this.client.on('error', this.onError)
         this.client.on('ready', this.onReady)
         this.client.on('message', this.onMessage)
         this.client.on('messageReactionAdd', this.onMessageReactionAdd)
         this.client.on('messageReactionRemove', this.onMessageReactionRemove)
 
+        // connect to discord
         await this.client.login(this.token)
+    }
+
+    protected cleanup = async (): Promise<void> => {
+        // close discord connection
+        try {
+            this.client.destroy()
+        } catch (e) {
+            console.error(e)
+        }
+
+        // close db connection
+        if (this.db) {
+            try {
+                await this.db.close()
+            } catch (e) {
+                console.error(e)
+            }
+        }
+
+        process.exit(0)
     }
 
     protected onError = async (error: ErrorType): Promise<void> => {

@@ -3,6 +3,7 @@
 !src/
 !types/
 !index.ts
+!ormconfig.json
 !package.json
 !package-lock.json
 !tsconfig.json

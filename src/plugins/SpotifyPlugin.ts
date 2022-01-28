@@ -1,6 +1,8 @@
 import Discord, { Message } from 'discord.js'
 import { NextFunction, Plugin } from '../../types/plugins'
+import { Song } from '../models/Song'
 import SpotifyWebApi from 'spotify-web-api-node'
+import { User } from '../models/User'
 
 const trackIdRegExp = new RegExp(/\bspotify.com\/track\/([A-Za-z0-9_-]{10,})\b|^([A-Za-z0-9_-]{10,})$/)
 
@@ -84,7 +86,15 @@ export default class SpotifyPlugin implements Plugin {
 
         const trackId = trackIdMatch[1] ?? trackIdMatch[2]
 
+        if ( ! await this.isTrackIdUnique(trackId)) {
+            return msg.channel.send('song of the day must be unique')
+        }
+
         try {
+            // create entry in database
+            const user = await this.getOrCreateUser(msg.author)
+            const song = await this.addSongOfTheDay(trackId, user)
+
             // create entry in playlist
             const spotify = await this.spotify()
             const { body: res } = await spotify.addTracksToPlaylist(process.env.SPOTIFY_PLAYLIST_ID!, [
@@ -97,5 +107,37 @@ export default class SpotifyPlugin implements Plugin {
 
             return msg.channel.send('error adding song of the day')
         }
+    }
+
+    protected async getOrCreateUser(discordUser: Discord.User): Promise<User> {
+        let user = await User.getRepository().findOne({ where: { id: discordUser.id } })
+        if ( ! user) {
+            user = new User()
+            user.id = discordUser.id
+            user.name = discordUser.username
+            await user.save()
+        }
+        return user
+    }
+
+    protected async isTrackIdUnique(trackId: string): Promise<boolean> {
+        const count = await Song.createQueryBuilder().where({ trackId }).getCount()
+
+        return count === 0
+    }
+
+    protected async addSongOfTheDay(trackId: string, user: User): Promise<Song> {
+        const spotify = await this.spotify()
+        const { body: track } = await spotify.getTrack(trackId)
+
+        const song = new Song()
+        song.trackId = trackId
+        song.artist = track.artists[0].name
+        song.title = track.name
+        song.date = new Date().toISOString().split('T')[0]
+        song.userId = user.id
+        song.user = user
+
+        return await song.save()
     }
 }
