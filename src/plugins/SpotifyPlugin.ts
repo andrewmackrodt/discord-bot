@@ -1,6 +1,8 @@
+import Discord, { Message } from 'discord.js'
 import { NextFunction, Plugin } from '../../types/plugins'
 import SpotifyWebApi from 'spotify-web-api-node'
-import Discord, { Message } from 'discord.js'
+
+const trackIdRegExp = new RegExp(/\bspotify.com\/track\/([A-Za-z0-9_-]{10,})\b|^([A-Za-z0-9_-]{10,})$/)
 
 export default class SpotifyPlugin implements Plugin {
     private _spotify?: SpotifyWebApi
@@ -61,16 +63,39 @@ export default class SpotifyPlugin implements Plugin {
 
     public async onMessage (msg: Message, next: NextFunction): Promise<any> {
         const words = msg.content.split(/[ \t]+/)
-        const [action] = words
+        const [action, command, url] = words
 
         if (action !== '#sotd') {
             return next()
         }
 
         if ( ! this.isSupported) {
-            return msg.reply('the spotify plugin is not correctly configured, please contact the server admin')
+            return msg.channel.send('the spotify plugin is not correctly configured, please contact the server admin')
         }
 
-        return msg.reply('song of the day coming soon™')
+        let trackIdMatch: RegExpExecArray | null
+
+        if (command !== 'add' ||
+            ! url ||
+            ! (trackIdMatch = trackIdRegExp.exec(url))
+        ) {
+            return msg.channel.send('usage: `#sotd add https://open.spotify.com/track/70cI6K8qorn5eOICHkUo95`')
+        }
+
+        const trackId = trackIdMatch[1] ?? trackIdMatch[2]
+
+        try {
+            // create entry in playlist
+            const spotify = await this.spotify()
+            const { body: res } = await spotify.addTracksToPlaylist(process.env.SPOTIFY_PLAYLIST_ID!, [
+                `spotify:track:${trackId}`,
+            ])
+
+            return msg.channel.send(`song of the day added to playlist <https://open.spotify.com/playlist/${process.env.SPOTIFY_PLAYLIST_ID}>`)
+        } catch (e) {
+            console.error(e)
+
+            return msg.channel.send('error adding song of the day')
+        }
     }
 }
