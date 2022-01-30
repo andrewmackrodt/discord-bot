@@ -1,8 +1,9 @@
-import Discord, { Message } from 'discord.js'
+import Discord, { Message, MessageReaction, PartialUser } from 'discord.js'
 import { NextFunction, Plugin } from '../../types/plugins'
 import { Song } from '../models/Song'
 import SpotifyWebApi from 'spotify-web-api-node'
 import { User } from '../models/User'
+import { toMarkdownTable } from '../utils/string-utils'
 
 const trackIdRegExp = new RegExp(/\bspotify.com\/track\/([A-Za-z0-9_-]{10,})\b|^([A-Za-z0-9_-]{10,})$/)
 
@@ -15,6 +16,10 @@ const commandsHelp: Record<string, CommandHelp> = {
     add: {
         title: 'add a new song of the day',
         usage: '#sotd add https://open.spotify.com/track/70cI6K8qorn5eOICHkUo95',
+    },
+    history: {
+        title: 'show song of the day history',
+        usage: '#sotd history',
     },
     random: {
         title: 'fetch a random previously entered song of the day',
@@ -31,6 +36,8 @@ const helpText = ':notepad_spiral: **Song of the Day Help**\n\n' +
         .map(obj => `> **${obj.title}**:\n> \`${obj.usage}\``)
         .join('\n> \n')
 
+const historyLimit = 5
+
 function error(text: string): string {
     return `:no_entry: ${text}`
 }
@@ -39,23 +46,8 @@ function success(text: string): string {
     return `:white_check_mark: ${text}`
 }
 
-function padLeft(text: string, maxLen: number): string {
-    const padLen = maxLen - text.length
-    const pad = new Array(padLen).fill(' ').join('')
-    return `${pad}${text}`
-}
-
-function padRight(text: string, maxLen: number): string {
-    const padLen = maxLen - text.length
-    const pad = new Array(padLen).fill(' ').join('')
-    return `${text}${pad}`
-}
-
-function toMarkdownRow(cols: string[]) {
-    return '| ' + cols.join(' | ') + ' |'
-}
-
 export default class SpotifyPlugin implements Plugin {
+    private _clientUserId?: string
     private _spotify?: SpotifyWebApi
     private _tokenExpiresAt = new Date(1970, 0, 1, 0, 0, 0, 0)
 
@@ -102,6 +94,8 @@ export default class SpotifyPlugin implements Plugin {
     }
 
     public async onConnect(client: Discord.Client): Promise<unknown> {
+        this._clientUserId = client.user?.id
+
         if ( ! this.isSupported) {
             return
         }
@@ -131,6 +125,8 @@ export default class SpotifyPlugin implements Plugin {
                 return this.help(options, message)
             case 'add':
                 return this.add(options, message)
+            case 'history':
+                return this.history(message)
             case 'random':
                 return this.random(message)
             case 'stats':
@@ -206,6 +202,65 @@ export default class SpotifyPlugin implements Plugin {
         }
     }
 
+    protected async history(message: Message): Promise<Discord.Message> {
+        const text = await this.getSongHistoryText()
+
+        if ( ! text) {
+            return message.channel.send('the song of the day data is empty, try adding a new song')
+        }
+
+        const historyMessage = await message.channel.send(text)
+        await historyMessage.react('⏮️')
+        await historyMessage.react('⏭️')
+
+        return historyMessage
+    }
+
+    public async onMessageReactionAdd(
+        reaction: MessageReaction,
+        user: Discord.User | PartialUser,
+        next: NextFunction,
+    ) {
+        const message = reaction.message
+        let pageStr: string | undefined
+
+        if ( ! this._clientUserId ||
+            this._clientUserId !== message.author.id ||
+            ! ['⏮️', '⏭️'].includes(reaction.emoji.name) ||
+            ! (pageStr = message.content.match(/page (\d+)/)?.[1])
+        ) {
+            return next()
+        }
+
+        let page = parseInt(pageStr, 10)
+
+        if (reaction.emoji.name === '⏮️') {
+            // ignore if trying to seek before first page
+            if (page === 1) {
+                return
+            }
+            page--
+        } else {
+            page++
+        }
+
+        const content = await this.getSongHistoryText(page)
+
+        if ( ! content) {
+            return
+        }
+
+        return message.edit({ content })
+    }
+
+    public async onMessageReactionRemove(
+        reaction: MessageReaction,
+        user: Discord.User | PartialUser,
+        next: NextFunction,
+    ) {
+        return this.onMessageReactionAdd(reaction, user, next)
+    }
+
     protected async random(message: Message): Promise<Discord.Message> {
         const song = await Song.createQueryBuilder('songs')
             .innerJoinAndSelect('songs.user', 'user')
@@ -240,41 +295,13 @@ export default class SpotifyPlugin implements Plugin {
             count: number
         }[]
 
-        if (rows.length === 0) {
+        const markdown = toMarkdownTable(rows)
+
+        if (typeof markdown === 'undefined') {
             return message.channel.send('the song of the day data is empty, try adding a new song')
         }
 
-        const headers = Object.keys(rows[0])
-        const maxLen = headers.map(header => header.length)
-
-        for (const row of rows) {
-            const values = Object.values(row)
-            for (let i = 0; i < values.length; i++) {
-                const str = typeof values[i] === 'number'
-                    ? values[i].toString(10)
-                    : values[i].toString()
-                maxLen[i] = Math.max(maxLen[i], str.length)
-            }
-        }
-
-        const table = rows.map(row => {
-            const values = Object.values(row)
-            const cols: string[] = []
-            for (let i = 0; i < values.length; i++) {
-                const value = values[i]
-                if (typeof value === 'number') {
-                    cols.push(padLeft(value.toString(10), maxLen[i]))
-                } else {
-                    cols.push(padRight(value.toString(), maxLen[i]))
-                }
-            }
-            return toMarkdownRow(cols)
-        })
-
-        table.unshift(toMarkdownRow(headers.map((header, i) => new Array(maxLen[i]).fill('-').join(''))))
-        table.unshift(toMarkdownRow(headers.map((header, i) => padRight(header, maxLen[i]))))
-
-        return message.channel.send('```\n' + table.join('\n') + '\n```')
+        return message.channel.send('```\n' + markdown + '\n```')
     }
 
     protected async getOrCreateUser(discordUser: Discord.User): Promise<User> {
@@ -307,5 +334,36 @@ export default class SpotifyPlugin implements Plugin {
         song.user = user
 
         return await song.save()
+    }
+
+    protected async getSongHistoryText(page = 1): Promise<string | undefined> {
+        const offset = (page - 1) * historyLimit
+
+        const rows = await Song.createQueryBuilder('songs')
+            .innerJoin('songs.user', 'users')
+            .select(['artist', 'title', 'users.name as author', 'date', 'track_id'])
+            .orderBy('songs.id', 'DESC')
+            .offset(offset).limit(historyLimit)
+            .getRawMany() as
+            {
+                artist: string
+                title: string
+                author: string
+                date: string
+                track_id: string
+            }[]
+
+        if (rows.length === 0) {
+            return
+        }
+
+        return `:notepad_spiral: **Song of the Day History** — page ${page}\n\n` + rows.reduce(
+            (res, row) => {
+                const title = `**${row.artist} - ${row.title}** — added by ${row.author} on ${row.date}`
+                const url = `<https://open.spotify.com/track/${row.track_id}>`
+                res.push(`> ${title}\n> ${url}`)
+
+                return res
+            }, [] as string[]).join('\n> \n')
     }
 }
