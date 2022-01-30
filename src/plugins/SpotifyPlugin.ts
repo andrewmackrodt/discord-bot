@@ -1,4 +1,4 @@
-import Discord, { Message, MessageReaction, PartialUser } from 'discord.js'
+import Discord, { Message, MessageEmbed, MessageReaction, PartialUser, TextChannel } from 'discord.js'
 import { NextFunction, Plugin } from '../../types/plugins'
 import { Song } from '../models/Song'
 import SpotifyWebApi from 'spotify-web-api-node'
@@ -19,7 +19,7 @@ const commandsHelp: Record<string, CommandHelp> = {
     },
     history: {
         title: 'show song of the day history',
-        usage: '#sotd history',
+        usage: '#sotd history [username?]',
     },
     random: {
         title: 'fetch a random previously entered song of the day',
@@ -44,6 +44,11 @@ function error(text: string): string {
 
 function success(text: string): string {
     return `:white_check_mark: ${text}`
+}
+
+interface SongHistoryOptions {
+    page?: number
+    userId?: string
 }
 
 export default class SpotifyPlugin implements Plugin {
@@ -108,7 +113,7 @@ export default class SpotifyPlugin implements Plugin {
 
     public async onMessage(message: Message, next: NextFunction): Promise<unknown> {
         const words = message.content.split(/[ \t]+/)
-        const [tag, command, ...options] = words
+        const [tag, command, ...params] = words
 
         if (tag !== '#sotd') {
             return next()
@@ -122,17 +127,17 @@ export default class SpotifyPlugin implements Plugin {
 
         switch (command) {
             case 'help':
-                return this.help(options, message)
+                return this.help(message, params)
             case 'add':
-                return this.add(options, message)
+                return this.add(message, params)
             case 'history':
-                return this.history(message)
+                return this.history(message, params)
             case 'random':
                 return this.random(message)
             case 'stats':
                 return this.stats(message)
             default:
-                return this.help([command], message)
+                return this.help(message, [command])
         }
     }
 
@@ -150,11 +155,11 @@ export default class SpotifyPlugin implements Plugin {
         return message.channel.send(response)
     }
 
-    protected async help(options: string[], message: Message): Promise<Discord.Message> {
+    protected async help(message: Message, params: string[] = []): Promise<Discord.Message> {
         let replyPrefix = ''
 
-        if (options.length > 0) {
-            const [command] = options
+        if (params.length > 0) {
+            const [command] = params
             const help = commandsHelp[command]
 
             if (help) {
@@ -167,8 +172,8 @@ export default class SpotifyPlugin implements Plugin {
         return message.channel.send(replyPrefix + helpText)
     }
 
-    protected async add(options: string[], message: Message): Promise<Discord.Message> {
-        const url = options[0] ?? ''
+    protected async add(message: Message, params: string[]): Promise<Discord.Message> {
+        const url = params[0] ?? ''
         const trackIdMatch = trackIdRegExp.exec(url)
 
         if ( ! url || ! (trackIdMatch )) {
@@ -202,14 +207,24 @@ export default class SpotifyPlugin implements Plugin {
         }
     }
 
-    protected async history(message: Message): Promise<Discord.Message> {
-        const text = await this.getSongHistoryText()
+    protected async history(message: Message, params: string[] = []): Promise<Discord.Message> {
+        const options: SongHistoryOptions = { page: 1 }
 
-        if ( ! text) {
+        if (params.length > 0) {
+            options.userId = await this.lookupUserId(message.channel as TextChannel, params[0])
+
+            if ( ! options.userId) {
+                return message.channel.send(error(`unknown user: ${params[0]}`))
+            }
+        }
+
+        const songHistoryEmbed = await this.getSongHistoryEmbed(options)
+
+        if ( ! songHistoryEmbed) {
             return message.channel.send('the song of the day data is empty, try adding a new song')
         }
 
-        const historyMessage = await message.channel.send(text)
+        const historyMessage = await message.channel.send(songHistoryEmbed)
         await historyMessage.react('⏮️')
         await historyMessage.react('⏭️')
 
@@ -222,17 +237,20 @@ export default class SpotifyPlugin implements Plugin {
         next: NextFunction,
     ) {
         const message = reaction.message
-        let pageStr: string | undefined
+        const embed = reaction.message.embeds[0] as MessageEmbed | undefined
+        const { title, description } = embed ?? {}
+        const pageStr = /page(?: |: ?)([0-9]+)/.exec(description ?? '')?.[1] ?? ''
+        let page = parseInt(pageStr, 10)
+        const userId = /userId(?: |: ?)([0-9]+)/.exec(description ?? '')?.[1]
 
         if ( ! this._clientUserId ||
             this._clientUserId !== message.author.id ||
             ! ['⏮️', '⏭️'].includes(reaction.emoji.name) ||
-            ! (pageStr = message.content.match(/page (\d+)/)?.[1])
+            ! title?.match(/Song of the Day History/i) ||
+            isNaN(page)
         ) {
             return next()
         }
-
-        let page = parseInt(pageStr, 10)
 
         if (reaction.emoji.name === '⏮️') {
             // ignore if trying to seek before first page
@@ -244,13 +262,15 @@ export default class SpotifyPlugin implements Plugin {
             page++
         }
 
-        const content = await this.getSongHistoryText(page)
+        const options: SongHistoryOptions = { page, userId }
 
-        if ( ! content) {
+        const songHistory = await this.getSongHistoryEmbed(options)
+
+        if ( ! songHistory) {
             return
         }
 
-        return message.edit({ content })
+        return message.edit(songHistory)
     }
 
     public async onMessageReactionRemove(
@@ -336,15 +356,21 @@ export default class SpotifyPlugin implements Plugin {
         return await song.save()
     }
 
-    protected async getSongHistoryText(page = 1): Promise<string | undefined> {
+    protected async getSongHistoryEmbed(options?: SongHistoryOptions) {
+        const page = options?.page ?? 1
         const offset = (page - 1) * historyLimit
 
-        const rows = await Song.createQueryBuilder('songs')
+        let query = Song.createQueryBuilder('songs')
             .innerJoin('songs.user', 'users')
             .select(['artist', 'title', 'users.name as author', 'date', 'track_id'])
             .orderBy('songs.id', 'DESC')
             .offset(offset).limit(historyLimit)
-            .getRawMany() as
+
+        if (typeof options?.userId !== 'undefined') {
+            query = query.where('songs.user_id = :userId', { userId: options.userId })
+        }
+
+        const rows = await query.getRawMany() as
             {
                 artist: string
                 title: string
@@ -357,13 +383,49 @@ export default class SpotifyPlugin implements Plugin {
             return
         }
 
-        return `:notepad_spiral: **Song of the Day History** — page ${page}\n\n` + rows.reduce(
-            (res, row) => {
-                const title = `**${row.artist} - ${row.title}** — added by ${row.author} on ${row.date}`
-                const url = `<https://open.spotify.com/track/${row.track_id}>`
-                res.push(`> ${title}\n> ${url}`)
+        return {
+            embed: {
+                title: ':notepad_spiral: **Song of the Day History**',
+                description: JSON.stringify(options).replace(/["{}]/g, '').replace(/:/g, ': ').replace(/,/g, ' | '),
+                fields: rows.map(row => ([
+                    {
+                        name: ':musical_note:',
+                        value: ':link:',
+                        inline: true,
+                    },
+                    {
+                        name: `${row.artist} - ${row.title}`,
+                        value: `https://open.spotify.com/track/${row.track_id}`,
+                        inline: true,
+                    },
+                    {
+                        name: `added by ${row.author}`,
+                        value: `on ${row.date}`,
+                        inline: true,
+                    },
+                ])).flat(),
+            },
+        }
+    }
 
-                return res
-            }, [] as string[]).join('\n> \n')
+    protected async lookupUserId(channel: TextChannel, nameOrMention: string) : Promise<string | undefined> {
+        const userIdMentionMatch = nameOrMention.match(/^<@!([0-9]+)>$/)
+
+        if (userIdMentionMatch) {
+            return userIdMentionMatch[1]
+        }
+        const member = channel.members.find(m => (
+            m.user.username.localeCompare(nameOrMention, undefined, { sensitivity: 'base' }) === 0
+        ))
+
+        if (member) {
+            return member.id
+        }
+
+        const user = await User.findOne({ name: nameOrMention })
+
+        if (user) {
+            return user.id
+        }
     }
 }
