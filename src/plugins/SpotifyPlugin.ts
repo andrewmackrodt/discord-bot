@@ -16,6 +16,10 @@ const commandsHelp: Record<string, CommandHelp> = {
         title: 'add a new song of the day',
         usage: '#sotd add https://open.spotify.com/track/70cI6K8qorn5eOICHkUo95',
     },
+    random: {
+        title: 'fetch a random previously entered song of the day',
+        usage: '#sotd random',
+    },
     stats: {
         title: 'display sotd stats',
         usage: '#sotd stats',
@@ -127,6 +131,8 @@ export default class SpotifyPlugin implements Plugin {
                 return this.help(options, message)
             case 'add':
                 return this.add(options, message)
+            case 'random':
+                return this.random(message)
             case 'stats':
                 return this.stats(message)
             default:
@@ -198,6 +204,20 @@ export default class SpotifyPlugin implements Plugin {
 
             return message.channel.send(error('an unknown error has occurred'))
         }
+    }
+
+    protected async random(message: Message): Promise<Discord.Message> {
+        const song = await Song.createQueryBuilder('songs')
+            .innerJoinAndSelect('songs.user', 'user')
+            .orderBy('random()').limit(1).getOne()
+
+        if ( ! song) {
+            return message.channel.send('the song of the day data is empty, try adding a new song')
+        }
+
+        const url = `https://open.spotify.com/track/${song.trackId}`
+
+        return message.channel.send(`:musical_note: **${song.artist} - ${song.title}** added by ${song.user.name} on ${song.date}\n${url}`)
     }
 
     protected async stats(message: Message): Promise<Discord.Message> {
