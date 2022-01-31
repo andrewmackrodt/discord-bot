@@ -33,8 +33,8 @@ const commandsHelp: Record<string, CommandHelp> = {
 
 const helpText = ':notepad_spiral: **Song of the Day Help**\n\n' +
     Object.values(commandsHelp)
-        .map(obj => `> **${obj.title}**:\n> \`${obj.usage}\``)
-        .join('\n> \n')
+        .map(obj => `> **${obj.title}**:\n> \`\`\`${obj.usage}\`\`\``)
+        .join('\n')
 
 const historyLimit = 5
 
@@ -146,7 +146,7 @@ export default class SpotifyPlugin implements Plugin {
         { title, usage }: CommandHelp,
         isSyntaxError = false,
     ): Promise<Discord.Message> {
-        let response = `> **${title}**\n> \`${usage}\``
+        let response = `> **${title}**\n> \`\`\`${usage}\`\`\``
 
         if (isSyntaxError) {
             response = error('the command contains a syntax error') + `\n\n${response}`
@@ -225,8 +225,8 @@ export default class SpotifyPlugin implements Plugin {
         }
 
         const historyMessage = await message.channel.send(songHistoryEmbed)
-        await historyMessage.react('⏮️')
-        await historyMessage.react('⏭️')
+        await historyMessage.react('⏮')
+        await historyMessage.react('⏭')
 
         return historyMessage
     }
@@ -245,14 +245,14 @@ export default class SpotifyPlugin implements Plugin {
 
         if ( ! this._clientUserId ||
             this._clientUserId !== message.author.id ||
-            ! ['⏮️', '⏭️'].includes(reaction.emoji.name) ||
+            ! ['⏮', '⏭'].includes(reaction.emoji.name) ||
             ! title?.match(/Song of the Day History/i) ||
             isNaN(page)
         ) {
             return next()
         }
 
-        if (reaction.emoji.name === '⏮️') {
+        if (reaction.emoji.name === '⏮') {
             // ignore if trying to seek before first page
             if (page === 1) {
                 return
@@ -383,14 +383,16 @@ export default class SpotifyPlugin implements Plugin {
             return
         }
 
+        const firstSongIndex = 1 + ((page - 1) * historyLimit)
+
         return {
             embed: {
                 title: ':notepad_spiral: **Song of the Day History**',
                 description: JSON.stringify(options).replace(/["{}]/g, '').replace(/:/g, ': ').replace(/,/g, ' | '),
-                fields: rows.map(row => ([
+                fields: rows.map((row, i) => ([
                     {
-                        name: ':musical_note:',
-                        value: ':link:',
+                        name: '#',
+                        value: firstSongIndex + i,
                         inline: true,
                     },
                     {
