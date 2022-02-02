@@ -1,40 +1,83 @@
 import Discord, { Message, MessageEmbed, MessageReaction, PartialUser, TextChannel } from 'discord.js'
 import { NextFunction, Plugin } from '../../types/plugins'
 import { Song } from '../models/Song'
+import { SongOfTheDaySettings } from '../models/SongOfTheDaySettings'
 import SpotifyWebApi from 'spotify-web-api-node'
 import { User } from '../models/User'
-import { toMarkdownTable } from '../utils/string-utils'
+import { padRight, toMarkdownTable } from '../utils/string'
+import { random } from '../utils/array'
 
 const trackIdRegExp = new RegExp(/\bspotify.com\/track\/([A-Za-z0-9_-]{10,})\b|^([A-Za-z0-9_-]{10,})$/)
 
-interface CommandHelp {
+interface CommandUsage {
+    command: string[]
     title: string
     usage: string
+    params?: Record<string, string>
 }
 
-const commandsHelp: Record<string, CommandHelp> = {
-    add: {
+const commandsUsage: CommandUsage[] = [
+    {
+        command: ['add'],
         title: 'add a new song of the day',
         usage: '#sotd add https://open.spotify.com/track/70cI6K8qorn5eOICHkUo95',
     },
-    history: {
+    {
+        command: ['history'],
         title: 'show song of the day history',
         usage: '#sotd history [username?]',
     },
-    random: {
+    {
+        command: ['random'],
         title: 'fetch a random previously entered song of the day',
         usage: '#sotd random',
     },
-    stats: {
-        title: 'display sotd stats',
+    {
+        command: ['stats'],
+        title: 'display song of the day stats',
         usage: '#sotd stats',
     },
+]
+
+function getCommandUsage(...params: string[]): CommandUsage {
+    const paramsStr = params.join(' ')
+
+    const usage = commandsUsage.find(help => (
+        help.command.length === params.length && help.command.join(' ') === paramsStr
+    ))
+
+    if ( ! usage) {
+        throw new Error(`unknown command: ${params.join(' ')}`)
+    }
+
+    return usage
+}
+
+function formatCommandUsage(usage: CommandUsage): string {
+    const text: string[] = []
+    text.push(`**${usage.title}**:`)
+    text.push('```')
+    text.push(usage.usage)
+
+    if (usage.params) {
+        const params: string[] = []
+        for (const [param, description] of Object.entries(usage.params)) {
+            params.push(' ' + padRight(param, 10) + description)
+        }
+        if (params.length > 0) {
+            text.push('')
+            text.push('params:')
+            text.push(...params)
+        }
+    }
+
+    text.push('```')
+
+    return '> ' + text.join('\n> ')
 }
 
 const helpText = ':notepad_spiral: **Song of the Day Help**\n\n' +
-    Object.values(commandsHelp)
-        .map(obj => `> **${obj.title}**:\n> \`\`\`${obj.usage}\`\`\``)
-        .join('\n')
+    Object.values(commandsUsage).map(formatCommandUsage).join('\n')
 
 const historyLimit = 5
 
@@ -51,78 +94,75 @@ interface SongHistoryOptions {
     userId?: string
 }
 
-export default class SpotifyPlugin implements Plugin {
-    private _clientUserId?: string
-    private _spotify?: SpotifyWebApi
-    private _tokenExpiresAt = new Date(1970, 0, 1, 0, 0, 0, 0)
+interface SpotifyClient {
+    settings: SongOfTheDaySettings
+    sdk: SpotifyWebApi
+    tokenExpiresAt: Date
+}
 
-    protected get isSupported(): boolean {
-        return Boolean(this._spotify)
-    }
+/**
+ * Developer Dashboard:
+ * https://developer.spotify.com/dashboard/applications
+ *
+ * Authorization Code Flow:
+ * https://accounts.spotify.com/en/authorize?response_type=code
+ *   &client_id={{ SPOTIFY_CLIENT_ID }}
+ *   &redirect_uri=http:%2F%2Flocalhost:8080
+ *   &scope=playlist-read-collaborative%20playlist-modify-public%20playlist-modify-private
+ */
+export default class SongOfTheDayPlugin implements Plugin {
+    private clientUserId?: string
+    private spotifyClients: Record<string, SpotifyClient> = {}
 
-    public constructor() {
-        if ( ! Boolean(
-            process.env.SPOTIFY_CLIENT_ID &&
-            process.env.SPOTIFY_CLIENT_SECRET &&
-            process.env.SPOTIFY_REFRESH_TOKEN &&
-            process.env.SPOTIFY_PLAYLIST_ID,
-        )) {
-            return
-        }
+    protected async spotify(serverId: string): Promise<SpotifyClient | null> {
+        let client = this.spotifyClients[serverId]
+        let isNewConnection = false
 
-        this._spotify = new SpotifyWebApi({
-            clientId: process.env.SPOTIFY_CLIENT_ID,
-            clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-            redirectUri: 'http://localhost:8080',
-            refreshToken: process.env.SPOTIFY_REFRESH_TOKEN,
-        })
-    }
+        if (typeof client === 'undefined') {
+            const settings = await SongOfTheDaySettings.findOne({ where: { serverId } })
 
-    protected async spotify(): Promise<SpotifyWebApi> {
-        if ( ! this._spotify) {
-            throw new Error('spotify is disabled')
-        }
+            if (settings) {
+                this.spotifyClients[serverId] = client = {
+                    settings,
+                    sdk: new SpotifyWebApi({
+                        clientId: settings.spotifyClientId,
+                        clientSecret: settings.spotifyClientSecret,
+                        redirectUri: 'http://localhost:8080',
+                        refreshToken: settings.spotifyRefreshToken,
+                    }),
+                    tokenExpiresAt: new Date(1970, 0, 1, 0, 0, 0, 0),
+                }
 
-        if (this._tokenExpiresAt <= new Date()) {
-            try {
-                const { body: tokenResponse } = await this._spotify.refreshAccessToken()
-                this._spotify.setAccessToken(tokenResponse.access_token)
-                this._tokenExpiresAt = new Date()
-                this._tokenExpiresAt.setSeconds(this._tokenExpiresAt.getSeconds() + tokenResponse.expires_in - 30)
-            } catch (e) {
-                delete this._spotify
-                throw e
+                isNewConnection = true
             }
         }
 
-        return this._spotify
-    }
-
-    public async onConnect(client: Discord.Client): Promise<unknown> {
-        this._clientUserId = client.user?.id
-
-        if ( ! this.isSupported) {
-            return
+        if ( ! client) {
+            return null
         }
 
-        const spotify = await this.spotify()
-        const { body: user } = await spotify.getMe()
+        if (client.tokenExpiresAt <= new Date()) {
+            const { body: tokenResponse } = await client.sdk.refreshAccessToken()
+            client.sdk.setAccessToken(tokenResponse.access_token)
+            client.tokenExpiresAt = new Date()
+            client.tokenExpiresAt.setSeconds(client.tokenExpiresAt.getSeconds() + tokenResponse.expires_in - 30)
 
-        console.info('spotify: authenticated as', user.id)
+            if (isNewConnection) {
+                const { body: user } = await client.sdk.getMe()
+
+                console.info(`spotify: server ${serverId} authenticated as ${user.id}`)
+            }
+        }
+
+        return client
     }
 
     public async onMessage(message: Message, next: NextFunction): Promise<unknown> {
         const words = message.content.split(/[ \t]+/)
         const [tag, command, ...params] = words
 
-        if (tag !== '#sotd') {
+        if (tag !== '#sotd' || ! message.guild) {
             return next()
-        }
-
-        if ( ! this.isSupported) {
-            return message.channel.send(
-                error('the spotify plugin is not correctly configured, please contact the server admin'),
-            )
         }
 
         switch (command) {
@@ -143,10 +183,10 @@ export default class SpotifyPlugin implements Plugin {
 
     protected async sendCommandHelp(
         message: Message,
-        { title, usage }: CommandHelp,
+        usage: CommandUsage,
         isSyntaxError = false,
     ): Promise<Discord.Message> {
-        let response = `> **${title}**\n> \`\`\`${usage}\`\`\``
+        let response = formatCommandUsage(usage)
 
         if (isSyntaxError) {
             response = error('the command contains a syntax error') + `\n\n${response}`
@@ -159,14 +199,15 @@ export default class SpotifyPlugin implements Plugin {
         let replyPrefix = ''
 
         if (params.length > 0) {
-            const [command] = params
-            const help = commandsHelp[command]
+            const paramsStr = params.join(' ')
 
-            if (help) {
-                return this.sendCommandHelp(message, help)
+            for (const usage of commandsUsage) {
+                if (params.length === usage.command.length && paramsStr === usage.command.join(' ')) {
+                    return this.sendCommandHelp(message, usage)
+                }
             }
 
-            replyPrefix = error(`unknown command: ${command}`) + '\n\n'
+            replyPrefix = error('unknown command') + '\n\n'
         }
 
         return message.channel.send(replyPrefix + helpText)
@@ -177,7 +218,7 @@ export default class SpotifyPlugin implements Plugin {
         const trackIdMatch = trackIdRegExp.exec(url)
 
         if ( ! url || ! (trackIdMatch )) {
-            return this.sendCommandHelp(message, commandsHelp.add, true)
+            return this.sendCommandHelp(message, getCommandUsage('add'), true)
         }
 
         const trackId = trackIdMatch[1] ?? trackIdMatch[2]
@@ -186,19 +227,29 @@ export default class SpotifyPlugin implements Plugin {
             return message.channel.send(error('song of the day must be unique'))
         }
 
+        const spotify = await this.spotify(message.guild!.id)
+
+        if ( ! spotify) {
+            return message.channel.send(
+                error('the spotify plugin is not correctly configured, please contact the server admin'),
+            )
+        }
+
         try {
+            const sdk = spotify.sdk
+            const playlistId = spotify.settings.spotifyPlaylistId
+
             // create entry in database
             const user = await this.getOrCreateUser(message.author)
-            const song = await this.addSongOfTheDay(trackId, user)
+            const song = await this.addSongOfTheDay(sdk, trackId, user)
 
             // create entry in playlist
-            const spotify = await this.spotify()
-            const { body: res } = await spotify.addTracksToPlaylist(process.env.SPOTIFY_PLAYLIST_ID!, [
+            const { body: res } = await sdk.addTracksToPlaylist(playlistId, [
                 `spotify:track:${trackId}`,
             ])
 
             return message.channel.send(
-                success(`song of the day added to playlist <https://open.spotify.com/playlist/${process.env.SPOTIFY_PLAYLIST_ID}>`),
+                success(`song of the day added to playlist <https://open.spotify.com/playlist/${playlistId}>`),
             )
         } catch (e) {
             console.error(e)
@@ -243,8 +294,8 @@ export default class SpotifyPlugin implements Plugin {
         let page = parseInt(pageStr, 10)
         const userId = /userId(?: |: ?)([0-9]+)/.exec(description ?? '')?.[1]
 
-        if ( ! this._clientUserId ||
-            this._clientUserId !== message.author.id ||
+        if ( ! this.clientUserId ||
+            this.clientUserId !== message.author.id ||
             ! ['⏮', '⏭'].includes(reaction.emoji.name) ||
             ! title?.match(/Song of the Day History/i) ||
             isNaN(page)
@@ -341,8 +392,7 @@ export default class SpotifyPlugin implements Plugin {
         return count === 0
     }
 
-    protected async addSongOfTheDay(trackId: string, user: User): Promise<Song> {
-        const spotify = await this.spotify()
+    protected async addSongOfTheDay(spotify: SpotifyWebApi, trackId: string, user: User): Promise<Song> {
         const { body: track } = await spotify.getTrack(trackId)
 
         const song = new Song()
