@@ -1,6 +1,7 @@
 import { Plugin } from '../types/plugins'
 import Discord, { Message, MessageReaction, PartialUser, User } from 'discord.js'
 import { Connection, createConnection } from 'typeorm'
+import { Schedule } from './Schedule'
 
 type ErrorType = Error | string
 
@@ -25,6 +26,7 @@ const forward = <T extends Plugin>(dispatch: (plugin: T) => any, stack: T[]) => 
 
 export class Client {
     protected readonly client = new Discord.Client()
+    protected readonly schedule = new Schedule()
     protected db?: Connection
 
     public constructor(
@@ -53,6 +55,8 @@ export class Client {
     }
 
     protected cleanup = async (): Promise<void> => {
+        await this.schedule.shutdown()
+
         // close discord connection
         try {
             this.client.destroy()
@@ -85,6 +89,14 @@ export class Client {
             }
 
             void plugin.onConnect(this.client)
+        }
+
+        for (const plugin of this.plugins) {
+            if ( ! plugin.registerScheduler) {
+                continue
+            }
+
+            void plugin.registerScheduler(this.client, this.schedule)
         }
     }
 

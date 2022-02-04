@@ -1,6 +1,7 @@
 import { NextFunction, Plugin } from '../../types/plugins'
 import { TwitterClient } from 'twitter-api-client'
 import Discord, { Message, TextChannel } from 'discord.js'
+import { Schedule } from '../Schedule'
 import UsersLookup from 'twitter-api-client/dist/interfaces/types/UsersLookupTypes'
 
 interface ScreenNameWatcher {
@@ -44,12 +45,12 @@ export default class TwitterPlugin implements Plugin {
         return this._twitter
     }
 
-    public async onConnect(client: Discord.Client): Promise<any> {
+    public async registerScheduler(client: Discord.Client, schedule: Schedule): Promise<void> {
         if ( ! this.isSupported) {
             return
         }
 
-        const refresh = async (): Promise<void> => {
+        schedule.add('*/10 * * * * *', async () => {
             for (const watcher of this.watchers) {
                 const elapsed = new Date().getTime() - watcher.lastUpdated.getTime()
 
@@ -81,14 +82,10 @@ export default class TwitterPlugin implements Plugin {
                     watcher.lastUpdated = new Date()
                 }
             }
-
-            setTimeout(refresh, 10000)
-        }
-
-        void refresh()
+        })
     }
 
-    public async onMessage (msg: Message, next: NextFunction): Promise<any> {
+    public async onMessage(msg: Message, next: NextFunction): Promise<any> {
         const words = msg.content.split(/[ \t]+/)
         const [action, command, screenName] = words
 

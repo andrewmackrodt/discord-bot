@@ -11,11 +11,14 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "strict": true,
-    "target": "es2019"
+    "target": "es2019",
+    "typeRoots": [
+      "./types",
+      "./node_modules/@types"
+    ]
   },
   "include": [
     "./src/**/*",
-    "./types/**/*"
   ],
   "files": [
     "./index.ts"
