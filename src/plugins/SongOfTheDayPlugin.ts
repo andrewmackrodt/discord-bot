@@ -221,9 +221,10 @@ export default class SongOfTheDayPlugin implements Plugin {
             return this.sendCommandHelp(message, getCommandUsage('add'), true)
         }
 
+        const serverId = message.guild!.id
         const trackId = trackIdMatch[1] ?? trackIdMatch[2]
 
-        if ( ! await this.isTrackIdUnique(trackId)) {
+        if ( ! await this.isTrackIdUnique(serverId, trackId)) {
             return message.channel.send(error('song of the day must be unique'))
         }
 
@@ -241,7 +242,7 @@ export default class SongOfTheDayPlugin implements Plugin {
 
             // create entry in database
             const user = await this.getOrCreateUser(message.author)
-            const song = await this.addSongOfTheDay(sdk, trackId, user)
+            const song = await this.addSongOfTheDay(sdk, serverId, trackId, user)
 
             // create entry in playlist
             const { body: res } = await sdk.addTracksToPlaylist(playlistId, [
@@ -269,7 +270,7 @@ export default class SongOfTheDayPlugin implements Plugin {
             }
         }
 
-        const songHistoryEmbed = await this.getSongHistoryEmbed(options)
+        const songHistoryEmbed = await this.getSongHistoryEmbed(message.guild!.id, options)
 
         if ( ! songHistoryEmbed) {
             return message.channel.send('the song of the day data is empty, try adding a new song')
@@ -315,7 +316,7 @@ export default class SongOfTheDayPlugin implements Plugin {
 
         const options: SongHistoryOptions = { page, userId }
 
-        const songHistory = await this.getSongHistoryEmbed(options)
+        const songHistory = await this.getSongHistoryEmbed(message.guild!.id, options)
 
         if ( ! songHistory) {
             return
@@ -335,6 +336,7 @@ export default class SongOfTheDayPlugin implements Plugin {
     protected async random(message: Message): Promise<Discord.Message> {
         const song = await Song.createQueryBuilder('songs')
             .innerJoinAndSelect('songs.user', 'user')
+            .where({ serverId: message.guild!.id })
             .orderBy('random()').limit(1).getOne()
 
         if ( ! song) {
@@ -354,6 +356,7 @@ export default class SongOfTheDayPlugin implements Plugin {
             .addSelect('min(songs.date) as first_added')
             .addSelect('max(songs.date) as last_added')
             .addSelect('count(songs.id) as count')
+            .where({ serverId: message.guild!.id })
             .addOrderBy('count', 'DESC')
             .addOrderBy('last_added', 'DESC')
             .addOrderBy('first_added', 'DESC')
@@ -386,16 +389,17 @@ export default class SongOfTheDayPlugin implements Plugin {
         return user
     }
 
-    protected async isTrackIdUnique(trackId: string): Promise<boolean> {
-        const count = await Song.createQueryBuilder().where({ trackId }).getCount()
+    protected async isTrackIdUnique(serverId: string, trackId: string): Promise<boolean> {
+        const count = await Song.createQueryBuilder().where({ serverId, trackId }).getCount()
 
         return count === 0
     }
 
-    protected async addSongOfTheDay(spotify: SpotifyWebApi, trackId: string, user: User): Promise<Song> {
+    protected async addSongOfTheDay(spotify: SpotifyWebApi, serverId: string, trackId: string, user: User): Promise<Song> {
         const { body: track } = await spotify.getTrack(trackId)
 
         const song = new Song()
+        song.serverId = serverId
         song.trackId = trackId
         song.artist = track.artists[0].name
         song.title = track.name
@@ -406,18 +410,19 @@ export default class SongOfTheDayPlugin implements Plugin {
         return await song.save()
     }
 
-    protected async getSongHistoryEmbed(options?: SongHistoryOptions) {
+    protected async getSongHistoryEmbed(serverId: string, options?: SongHistoryOptions) {
         const page = options?.page ?? 1
         const offset = (page - 1) * historyLimit
 
         let query = Song.createQueryBuilder('songs')
             .innerJoin('songs.user', 'users')
             .select(['artist', 'title', 'users.name as author', 'date', 'track_id'])
+            .where({ serverId })
             .orderBy('songs.id', 'DESC')
             .offset(offset).limit(historyLimit)
 
         if (typeof options?.userId !== 'undefined') {
-            query = query.where('songs.user_id = :userId', { userId: options.userId })
+            query = query.andWhere('songs.user_id = :userId', { userId: options.userId })
         }
 
         const rows = await query.getRawMany() as
