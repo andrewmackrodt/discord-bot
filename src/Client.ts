@@ -38,6 +38,7 @@ export class Client {
     public async start(): Promise<void> {
         // gracefully close connections on exit
         process.on('SIGINT', this.cleanup)
+        process.on('SIGTERM', this.cleanup)
 
         // create database connection and run migrations
         this.db = await createConnection()
