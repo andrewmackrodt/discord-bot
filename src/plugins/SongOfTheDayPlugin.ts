@@ -1,6 +1,7 @@
 import Discord, { Message, MessageEmbed, MessageReaction, PartialUser, TextChannel } from 'discord.js'
 import { NextFunction, Plugin } from '../../types/plugins'
 import { Song } from '../models/Song'
+import { SongOfTheDayRepository } from '../repositories/SongOfTheDayRepository'
 import { SongOfTheDaySettings } from '../models/SongOfTheDaySettings'
 import SpotifyWebApi from 'spotify-web-api-node'
 import { User } from '../models/User'
@@ -111,6 +112,7 @@ interface SpotifyClient {
  *   &scope=playlist-read-collaborative%20playlist-modify-public%20playlist-modify-private
  */
 export default class SongOfTheDayPlugin implements Plugin {
+    private readonly repository = new SongOfTheDayRepository()
     private clientUserId?: string
     private spotifyClients: Record<string, SpotifyClient> = {}
 
@@ -119,7 +121,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         let isNewConnection = false
 
         if (typeof client === 'undefined') {
-            const settings = await SongOfTheDaySettings.findOne({ where: { serverId } })
+            const settings = await this.repository.getServerSettings(serverId)
 
             if (settings) {
                 this.spotifyClients[serverId] = client = {
@@ -224,7 +226,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         const serverId = message.guild!.id
         const trackId = trackIdMatch[1] ?? trackIdMatch[2]
 
-        if ( ! await this.isTrackIdUnique(serverId, trackId)) {
+        if ( ! await this.repository.isUniqueServerTrackId(serverId, trackId)) {
             return message.channel.send(error('song of the day must be unique'))
         }
 
@@ -241,7 +243,7 @@ export default class SongOfTheDayPlugin implements Plugin {
             const playlistId = spotify.settings.spotifyPlaylistId
 
             // create entry in database
-            const user = await this.getOrCreateUser(message.author)
+            const user = await this.repository.getOrCreateUser(message.author)
             const song = await this.addSongOfTheDay(sdk, serverId, trackId, user)
 
             // create entry in playlist
@@ -334,10 +336,7 @@ export default class SongOfTheDayPlugin implements Plugin {
     }
 
     protected async random(message: Message): Promise<Discord.Message> {
-        const song = await Song.createQueryBuilder('songs')
-            .innerJoinAndSelect('songs.user', 'user')
-            .where({ serverId: message.guild!.id })
-            .orderBy('random()').limit(1).getOne()
+        const song = await this.repository.getRandomServerSong(message.guild!.id)
 
         if ( ! song) {
             return message.channel.send('the song of the day data is empty, try adding a new song')
@@ -349,25 +348,7 @@ export default class SongOfTheDayPlugin implements Plugin {
     }
 
     protected async stats(message: Message): Promise<Discord.Message> {
-        const rows = await Song.createQueryBuilder('songs')
-            .innerJoin('songs.user', 'users')
-            .groupBy('songs.user_id')
-            .select('users.name as name')
-            .addSelect('min(songs.date) as first_added')
-            .addSelect('max(songs.date) as last_added')
-            .addSelect('count(songs.id) as count')
-            .where({ serverId: message.guild!.id })
-            .addOrderBy('count', 'DESC')
-            .addOrderBy('last_added', 'DESC')
-            .addOrderBy('first_added', 'DESC')
-            .addOrderBy('name')
-            .getRawMany() as
-        {
-            name: string
-            first_added: string
-            last_added: string
-            count: number
-        }[]
+        const rows = await this.repository.getServerStats(message.guild!.id) as Record<string, any>[]
 
         const markdown = toMarkdownTable(rows)
 
@@ -378,61 +359,22 @@ export default class SongOfTheDayPlugin implements Plugin {
         return message.channel.send('```\n' + markdown + '\n```')
     }
 
-    protected async getOrCreateUser(discordUser: Discord.User): Promise<User> {
-        let user = await User.getRepository().findOne({ where: { id: discordUser.id } })
-        if ( ! user) {
-            user = new User()
-            user.id = discordUser.id
-            user.name = discordUser.username
-            await user.save()
-        }
-        return user
-    }
-
-    protected async isTrackIdUnique(serverId: string, trackId: string): Promise<boolean> {
-        const count = await Song.createQueryBuilder().where({ serverId, trackId }).getCount()
-
-        return count === 0
-    }
-
     protected async addSongOfTheDay(spotify: SpotifyWebApi, serverId: string, trackId: string, user: User): Promise<Song> {
         const { body: track } = await spotify.getTrack(trackId)
 
-        const song = new Song()
-        song.serverId = serverId
-        song.trackId = trackId
-        song.artist = track.artists[0].name
-        song.title = track.name
-        song.date = new Date().toISOString().split('T')[0]
-        song.userId = user.id
-        song.user = user
-
-        return await song.save()
+        return await this.repository.addSongOfTheDay(serverId, user, track)
     }
 
     protected async getSongHistoryEmbed(serverId: string, options?: SongHistoryOptions) {
         const page = options?.page ?? 1
         const offset = (page - 1) * historyLimit
 
-        let query = Song.createQueryBuilder('songs')
-            .innerJoin('songs.user', 'users')
-            .select(['artist', 'title', 'users.name as author', 'date', 'track_id'])
-            .where({ serverId })
-            .orderBy('songs.id', 'DESC')
-            .offset(offset).limit(historyLimit)
-
-        if (typeof options?.userId !== 'undefined') {
-            query = query.andWhere('songs.user_id = :userId', { userId: options.userId })
-        }
-
-        const rows = await query.getRawMany() as
-            {
-                artist: string
-                title: string
-                author: string
-                date: string
-                track_id: string
-            }[]
+        const rows = await this.repository.getServerHistory({
+            serverId,
+            userId: options?.userId,
+            limit: historyLimit,
+            offset,
+        })
 
         if (rows.length === 0) {
             return
@@ -479,7 +421,7 @@ export default class SongOfTheDayPlugin implements Plugin {
             return member.id
         }
 
-        const user = await User.findOne({ name: nameOrMention })
+        const user = await this.repository.getUserByName(nameOrMention)
 
         if (user) {
             return user.id
