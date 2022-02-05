@@ -29,5 +29,5 @@ export class Song extends BaseEntity {
 
     @ManyToOne(() => User, user => user.songs)
     @JoinColumn({ name: 'user_id' })
-    public user!: User
+    public user?: User
 }

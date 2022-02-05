@@ -1,5 +1,10 @@
 import { Column, BaseEntity, Entity, PrimaryColumn } from 'typeorm'
 
+export enum NotificationEventType {
+    PICK = 'pick',
+    OPEN = 'open',
+}
+
 @Entity({ name: 'sotd_settings' })
 export class SongOfTheDaySettings extends BaseEntity {
     @PrimaryColumn({ name: 'server_id' })
@@ -16,4 +21,13 @@ export class SongOfTheDaySettings extends BaseEntity {
 
     @Column({ name: 'spotify_playlist_id' })
     public spotifyPlaylistId!: string
+
+    @Column({ name: 'notifications_channel_id', nullable: true })
+    public notificationsChannelId?: string
+
+    @Column({ name: 'notifications_last_event_type', nullable: true })
+    public notificationsLastEventType?: NotificationEventType
+
+    @Column({ name: 'notifications_last_event_time', nullable: true })
+    public notificationsLastEventTime?: string
 }

@@ -1,10 +1,12 @@
 import Discord, { Message, MessageEmbed, MessageReaction, PartialUser, TextChannel } from 'discord.js'
 import { NextFunction, Plugin } from '../../types/plugins'
+import { Schedule } from '../Schedule'
 import { Song } from '../models/Song'
 import { SongOfTheDayRepository } from '../repositories/SongOfTheDayRepository'
-import { SongOfTheDaySettings } from '../models/SongOfTheDaySettings'
+import { NotificationEventType, SongOfTheDaySettings } from '../models/SongOfTheDaySettings'
 import SpotifyWebApi from 'spotify-web-api-node'
 import { User } from '../models/User'
+import { isWorkingDay, ymd } from '../utils/date'
 import { padRight, toMarkdownTable } from '../utils/string'
 import { random } from '../utils/array'
 
@@ -81,6 +83,9 @@ const helpText = ':notepad_spiral: **Song of the Day Help**\n\n' +
     Object.values(commandsUsage).map(formatCommandUsage).join('\n')
 
 const historyLimit = 5
+const notificationPickHour = 10
+const notificationOpenHour = 16
+const notificationStopHour = 18
 
 function error(text: string): string {
     return `:no_entry: ${text}`
@@ -115,6 +120,28 @@ export default class SongOfTheDayPlugin implements Plugin {
     private readonly repository = new SongOfTheDayRepository()
     private clientUserId?: string
     private spotifyClients: Record<string, SpotifyClient> = {}
+
+    public registerScheduler(client: Discord.Client, schedule: Schedule) {
+        schedule.add('* * * * *', async () => {
+            const now = new Date()
+
+            // only run tasks on working days between 10am and 6pm
+            if ( ! isWorkingDay(now) ||
+                now.getHours() < notificationPickHour ||
+                now.getHours() > notificationStopHour
+            ) {
+                return
+            }
+
+            for (const guild of client.guilds.cache.values()) {
+                try {
+                    await this.minutely(guild, now)
+                } catch (e) {
+                    console.error(e)
+                }
+            }
+        })
+    }
 
     protected async spotify(serverId: string): Promise<SpotifyClient | null> {
         let client = this.spotifyClients[serverId]
@@ -187,7 +214,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         message: Message,
         usage: CommandUsage,
         isSyntaxError = false,
-    ): Promise<Discord.Message> {
+    ): Promise<Message> {
         let response = formatCommandUsage(usage)
 
         if (isSyntaxError) {
@@ -197,7 +224,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         return message.channel.send(response)
     }
 
-    protected async help(message: Message, params: string[] = []): Promise<Discord.Message> {
+    protected async help(message: Message, params: string[] = []): Promise<Message> {
         let replyPrefix = ''
 
         if (params.length > 0) {
@@ -215,7 +242,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         return message.channel.send(replyPrefix + helpText)
     }
 
-    protected async add(message: Message, params: string[]): Promise<Discord.Message> {
+    protected async add(message: Message, params: string[]): Promise<Message> {
         const url = params[0] ?? ''
         const trackIdMatch = trackIdRegExp.exec(url)
 
@@ -261,7 +288,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         }
     }
 
-    protected async history(message: Message, params: string[] = []): Promise<Discord.Message> {
+    protected async history(message: Message, params: string[] = []): Promise<Message> {
         const options: SongHistoryOptions = { page: 1 }
 
         if (params.length > 0) {
@@ -335,7 +362,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         return this.onMessageReactionAdd(reaction, user, next)
     }
 
-    protected async random(message: Message): Promise<Discord.Message> {
+    protected async random(message: Message): Promise<Message> {
         const song = await this.repository.getRandomServerSong(message.guild!.id)
 
         if ( ! song) {
@@ -347,7 +374,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         return message.channel.send(`:musical_note: **${song.artist} - ${song.title}** added by ${song.user.name} on ${song.date}\n${url}`)
     }
 
-    protected async stats(message: Message): Promise<Discord.Message> {
+    protected async stats(message: Message): Promise<Message> {
         const rows = await this.repository.getServerStats(message.guild!.id) as Record<string, any>[]
 
         const markdown = toMarkdownTable(rows)
@@ -357,6 +384,72 @@ export default class SongOfTheDayPlugin implements Plugin {
         }
 
         return message.channel.send('```\n' + markdown + '\n```')
+    }
+
+    protected async minutely(guild: Discord.Guild, now = new Date()): Promise<void> {
+        const settings = await this.repository.getServerSettings(guild.id)
+
+        if ( ! settings?.notificationsChannelId) {
+            return
+        }
+
+        const nowYmd = ymd(now)
+        const isSongOfTheDay = await this.repository.serverContainsSongOfTheDayOnDate(guild.id, nowYmd)
+
+        if (isSongOfTheDay) {
+            return
+        }
+
+        const _channel = guild.channels.cache.get(settings.notificationsChannelId)
+
+        if ( ! _channel || _channel.type !== 'text') {
+            console.error(`songOfTheDay: server ${guild.id} has bad notifications channel configuration`)
+        }
+
+        const channel = _channel as TextChannel
+
+        const isEventTypeProcessable = (eventType: NotificationEventType): boolean => {
+            return settings.notificationsLastEventType !== eventType ||
+                (
+                    ! settings.notificationsLastEventTime ||
+                    ymd(settings.notificationsLastEventTime) !== nowYmd
+                )
+        }
+
+        const nowHour = now.getHours()
+
+        // pick a random user who has previously contributed to song of the day
+        // on this server and sent them a notification that it is their turn
+        if (notificationPickHour <= nowHour && nowHour < notificationOpenHour) {
+            if (isEventTypeProcessable(NotificationEventType.PICK)) {
+                const user = await this.repository.getRandomServerUserWithPastSongOfTheDay(guild.id)
+
+                if ( ! user) {
+                    return
+                }
+
+                await channel.send(`**<@${user.id}> you have been chosen to select the song of the day** :musical_note:`)
+
+                await this.repository.updateSettingsNotificationEvent(
+                    settings,
+                    NotificationEventType.PICK,
+                    now,
+                )
+            }
+        }
+        // send a message to the channel that there has been no song of the day
+        // and it is open to anyone on the server to add one
+        else if (notificationOpenHour <= nowHour && nowHour < notificationStopHour) {
+            if (isEventTypeProcessable(NotificationEventType.OPEN)) {
+                await channel.send('**Song of the day is open to the floor** :musical_note:')
+
+                await this.repository.updateSettingsNotificationEvent(
+                    settings,
+                    NotificationEventType.OPEN,
+                    now,
+                )
+            }
+        }
     }
 
     protected async addSongOfTheDay(spotify: SpotifyWebApi, serverId: string, trackId: string, user: User): Promise<Song> {

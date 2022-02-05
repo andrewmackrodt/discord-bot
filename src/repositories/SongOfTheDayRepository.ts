@@ -1,12 +1,13 @@
 import { Song } from '../models/Song'
-import { SongOfTheDaySettings } from '../models/SongOfTheDaySettings'
+import { NotificationEventType, SongOfTheDaySettings } from '../models/SongOfTheDaySettings'
 import { User } from '../models/User'
+import { ymd } from '../utils/date'
 
 interface ServerHistoryParams {
     serverId: string
     userId?: string
     limit: number
-    offset: number
+    offset?: number
 }
 
 interface ServerHistoryRow {
@@ -35,18 +36,24 @@ export class SongOfTheDayRepository {
         song.trackId = track.id
         song.artist = track.artists[0].name
         song.title = track.name
-        song.date = new Date().toISOString().split('T')[0]
+        song.date = ymd()
         song.userId = user.id
         song.user = user
 
         return await song.save()
     }
 
-    public async getRandomServerSong(serverId: string): Promise<Song | undefined> {
+    public async serverContainsSongOfTheDayOnDate(serverId: string, date: string): Promise<boolean> {
+        const count = await Song.createQueryBuilder().where({ serverId, date }).getCount()
+
+        return count > 1
+    }
+
+    public async getRandomServerSong(serverId: string): Promise<Song & { user: User } | undefined> {
         return await Song.createQueryBuilder('songs')
             .innerJoinAndSelect('songs.user', 'user')
             .where({ serverId })
-            .orderBy('random()').limit(1).getOne()
+            .orderBy('random()').limit(1).getOne() as Song & { user: User } | undefined
     }
 
     public async getServerHistory(params: ServerHistoryParams): Promise<ServerHistoryRow[]> {
@@ -105,5 +112,22 @@ export class SongOfTheDayRepository {
 
     public async getUserByName(name: string): Promise<User | undefined> {
         return await User.findOne({ name: name })
+    }
+
+    public async getRandomServerUserWithPastSongOfTheDay(serverId: string): Promise<User | undefined> {
+        const random = await this.getRandomServerSong(serverId)
+
+        return random?.user
+    }
+
+    public async updateSettingsNotificationEvent(
+        settings: SongOfTheDaySettings,
+        eventType: NotificationEventType,
+        eventTime: Date,
+    ): Promise<SongOfTheDaySettings> {
+        settings.notificationsLastEventType = eventType
+        settings.notificationsLastEventTime = eventTime.toISOString()
+
+        return await settings.save()
     }
 }
