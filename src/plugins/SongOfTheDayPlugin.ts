@@ -1,3 +1,4 @@
+import { CommandUsage, error, getCommandUsage, sendPluginHelpMessage, sendCommandHelpMessage, success } from '../utils/plugin'
 import Discord, { Message, MessageEmbed, MessageReaction, PartialUser, TextChannel } from 'discord.js'
 import { NextFunction, Plugin } from '../../types/plugins'
 import { Schedule } from '../Schedule'
@@ -7,17 +8,10 @@ import { NotificationEventType, SongOfTheDaySettings } from '../models/SongOfThe
 import SpotifyWebApi from 'spotify-web-api-node'
 import { User } from '../models/User'
 import { isWorkingDay, ymd } from '../utils/date'
-import { padRight, toMarkdownTable } from '../utils/string'
 import { random } from '../utils/array'
+import { toMarkdownTable } from '../utils/string'
 
 const trackIdRegExp = new RegExp(/\bspotify.com\/track\/([A-Za-z0-9_-]{10,})\b|^([A-Za-z0-9_-]{10,})$/)
-
-interface CommandUsage {
-    command: string[]
-    title: string
-    usage: string
-    params?: Record<string, string>
-}
 
 const commandsUsage: CommandUsage[] = [
     {
@@ -31,6 +25,11 @@ const commandsUsage: CommandUsage[] = [
         usage: '#sotd history [username?]',
     },
     {
+        command: ['nominate'],
+        title: 'todo',
+        usage: '#sotd nominate',
+    },
+    {
         command: ['random'],
         title: 'fetch a random previously entered song of the day',
         usage: '#sotd random',
@@ -41,59 +40,6 @@ const commandsUsage: CommandUsage[] = [
         usage: '#sotd stats',
     },
 ]
-
-function getCommandUsage(...params: string[]): CommandUsage {
-    const paramsStr = params.join(' ')
-
-    const usage = commandsUsage.find(help => (
-        help.command.length === params.length && help.command.join(' ') === paramsStr
-    ))
-
-    if ( ! usage) {
-        throw new Error(`unknown command: ${params.join(' ')}`)
-    }
-
-    return usage
-}
-
-function formatCommandUsage(usage: CommandUsage): string {
-    const text: string[] = []
-    text.push(`**${usage.title}**:`)
-    text.push('```')
-    text.push(usage.usage)
-
-    if (usage.params) {
-        const params: string[] = []
-        for (const [param, description] of Object.entries(usage.params)) {
-            params.push(' ' + padRight(param, 10) + description)
-        }
-        if (params.length > 0) {
-            text.push('')
-            text.push('params:')
-            text.push(...params)
-        }
-    }
-
-    text.push('```')
-
-    return '> ' + text.join('\n> ')
-}
-
-const helpText = ':notepad_spiral: **Song of the Day Help**\n\n' +
-    Object.values(commandsUsage).map(formatCommandUsage).join('\n')
-
-const historyLimit = 5
-const notificationPickHour = 10
-const notificationOpenHour = 16
-const notificationStopHour = 18
-
-function error(text: string): string {
-    return `:no_entry: ${text}`
-}
-
-function success(text: string): string {
-    return `:white_check_mark: ${text}`
-}
 
 interface SongHistoryOptions {
     page?: number
@@ -117,6 +63,11 @@ interface SpotifyClient {
  *   &scope=playlist-read-collaborative%20playlist-modify-public%20playlist-modify-private
  */
 export default class SongOfTheDayPlugin implements Plugin {
+    public static readonly HISTORY_LIMIT = 5
+    public static readonly NOTIFICATION_PICK_HOUR = 10
+    public static readonly NOTIFICATION_OPEN_HOUR = 16
+    public static readonly NOTIFICATION_STOP_HOUR = 18
+
     private readonly repository = new SongOfTheDayRepository()
     private clientUserId?: string
     private spotifyClients: Record<string, SpotifyClient> = {}
@@ -127,8 +78,8 @@ export default class SongOfTheDayPlugin implements Plugin {
 
             // only run tasks on working days between 10am and 6pm
             if ( ! isWorkingDay(now) ||
-                now.getHours() < notificationPickHour ||
-                now.getHours() > notificationStopHour
+                now.getHours() < SongOfTheDayPlugin.NOTIFICATION_PICK_HOUR ||
+                now.getHours() > SongOfTheDayPlugin.NOTIFICATION_STOP_HOUR
             ) {
                 return
             }
@@ -210,36 +161,8 @@ export default class SongOfTheDayPlugin implements Plugin {
         }
     }
 
-    protected async sendCommandHelp(
-        message: Message,
-        usage: CommandUsage,
-        isSyntaxError = false,
-    ): Promise<Message> {
-        let response = formatCommandUsage(usage)
-
-        if (isSyntaxError) {
-            response = error('the command contains a syntax error') + `\n\n${response}`
-        }
-
-        return message.channel.send(response)
-    }
-
     protected async help(message: Message, params: string[] = []): Promise<Message> {
-        let replyPrefix = ''
-
-        if (params.length > 0) {
-            const paramsStr = params.join(' ')
-
-            for (const usage of commandsUsage) {
-                if (params.length === usage.command.length && paramsStr === usage.command.join(' ')) {
-                    return this.sendCommandHelp(message, usage)
-                }
-            }
-
-            replyPrefix = error('unknown command') + '\n\n'
-        }
-
-        return message.channel.send(replyPrefix + helpText)
+        return sendPluginHelpMessage(':notepad_spiral: **Song of the Day Help**', commandsUsage, message, params)
     }
 
     protected async add(message: Message, params: string[]): Promise<Message> {
@@ -247,7 +170,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         const trackIdMatch = trackIdRegExp.exec(url)
 
         if ( ! url || ! (trackIdMatch )) {
-            return this.sendCommandHelp(message, getCommandUsage('add'), true)
+            return sendCommandHelpMessage(message, getCommandUsage(commandsUsage, 'add'), true)
         }
 
         const serverId = message.guild!.id
@@ -420,7 +343,7 @@ export default class SongOfTheDayPlugin implements Plugin {
 
         // pick a random user who has previously contributed to song of the day
         // on this server and sent them a notification that it is their turn
-        if (notificationPickHour <= nowHour && nowHour < notificationOpenHour) {
+        if (SongOfTheDayPlugin.NOTIFICATION_PICK_HOUR <= nowHour && nowHour < SongOfTheDayPlugin.NOTIFICATION_OPEN_HOUR) {
             if (isEventTypeProcessable(NotificationEventType.PICK)) {
                 const user = await this.repository.getRandomServerUserWithPastSongOfTheDay(guild.id)
 
@@ -439,7 +362,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         }
         // send a message to the channel that there has been no song of the day
         // and it is open to anyone on the server to add one
-        else if (notificationOpenHour <= nowHour && nowHour < notificationStopHour) {
+        else if (SongOfTheDayPlugin.NOTIFICATION_OPEN_HOUR <= nowHour && nowHour < SongOfTheDayPlugin.NOTIFICATION_STOP_HOUR) {
             if (isEventTypeProcessable(NotificationEventType.OPEN)) {
                 await channel.send('**Song of the day is open to the floor** :musical_note:')
 
@@ -460,12 +383,12 @@ export default class SongOfTheDayPlugin implements Plugin {
 
     protected async getSongHistoryEmbed(serverId: string, options?: SongHistoryOptions) {
         const page = options?.page ?? 1
-        const offset = (page - 1) * historyLimit
+        const offset = (page - 1) * SongOfTheDayPlugin.HISTORY_LIMIT
 
         const rows = await this.repository.getServerHistory({
             serverId,
             userId: options?.userId,
-            limit: historyLimit,
+            limit: SongOfTheDayPlugin.HISTORY_LIMIT,
             offset,
         })
 
@@ -473,7 +396,7 @@ export default class SongOfTheDayPlugin implements Plugin {
             return
         }
 
-        const firstSongIndex = 1 + ((page - 1) * historyLimit)
+        const firstSongIndex = 1 + ((page - 1) * SongOfTheDayPlugin.HISTORY_LIMIT)
 
         return {
             embed: {
