@@ -115,9 +115,16 @@ export class SongOfTheDayRepository {
     }
 
     public async getRandomServerUserWithPastSongOfTheDay(serverId: string): Promise<User | undefined> {
-        const random = await this.getRandomServerSong(serverId)
-
-        return random?.user
+        return await User.createQueryBuilder('users')
+            .innerJoin(qb => qb.from(Song, 'songs')
+                    .select('user_id')
+                    .where({ serverId })
+                    .distinct(true),
+                'server_users',
+                'server_users.user_id = users.id')
+            .orderBy('random()')
+            .limit(1)
+            .getOne()
     }
 
     public async updateSettingsNotificationEvent(
