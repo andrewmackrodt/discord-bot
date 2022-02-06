@@ -1,5 +1,5 @@
 import { Column, BaseEntity, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { User } from './User'
+import { User } from '../../../models/User'
 
 @Entity({ name: 'songs' })
 @Index('songs_server_id_track_id_uindex', ['serverId', 'trackId'], { unique: true })

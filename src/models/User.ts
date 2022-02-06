@@ -1,5 +1,5 @@
 import { Column, BaseEntity, Entity, OneToMany, PrimaryColumn, getConnection } from 'typeorm'
-import { Song } from './Song'
+import { Song } from '../plugins/song-of-the-day/models/Song'
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {

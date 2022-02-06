@@ -1,5 +1,5 @@
 import { Message } from 'discord.js'
-import { Plugin, NextFunction } from '../../types/plugins'
+import { Plugin, NextFunction } from '../../../types/plugins'
 import axios from 'axios'
 import cheerio from 'cheerio'
 

@@ -4,13 +4,16 @@
    "synchronize": false,
    "logging": false,
    "entities": [
-      "src/models/**/*.{ts,js}"
+      "src/models/**/*.{ts,js}",
+      "src/plugins/*/models/**/*.{ts,js}"
    ],
    "migrations": [
-      "src/migrations/**/*.{ts,js}"
+      "src/migrations/**/*.{ts,js}",
+      "src/plugins/*/migrations/**/*.{ts,js}"
    ],
    "subscribers": [
-      "src/subscribers/**/*.{ts,js}"
+      "src/subscribers/**/*.{ts,js}",
+      "src/plugins/*/subscribers/**/*.{ts,js}"
    ],
    "cli": {
       "entitiesDir": "src/models",

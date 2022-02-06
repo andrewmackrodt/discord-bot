@@ -1,5 +1,5 @@
 import { Message } from 'discord.js'
-import { Plugin, NextFunction } from '../../types/plugins'
+import { Plugin, NextFunction } from '../../../types/plugins'
 import { subClass } from 'gm'
 import path from 'path'
 
@@ -62,7 +62,7 @@ const images: Record<string, Image> = {
 }
 
 const gm = subClass({ imageMagick: true })
-const assetsPath = path.resolve(__dirname, '../../assets')
+const assetsPath = path.resolve(__dirname, 'assets')
 const fontsPath = path.resolve(assetsPath, 'fonts')
 const fontPath = path.resolve(fontsPath, 'NotoSans/NotoSans-Regular.ttf')
 const imagesPath = path.resolve(assetsPath, 'images')

@@ -14,9 +14,8 @@ function requirePlugins(): Plugin[] {
     const ext = isTs ? 'ts' : 'js'
     const pluginsPath = path.resolve(__dirname, 'src/plugins')
 
-    glob.sync(`${pluginsPath}/*.${ext}`).map(filepath => {
-        const name = path.basename(filepath).replace(/\.[jt]s$/, '')
-        const pathname = `${pluginsPath}/${name}`
+    glob.sync(`${pluginsPath}/*/index.${ext}`).map(filepath => {
+        const pathname = filepath.replace(/\.[jt]s$/, '')
 
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         let plugin = require(pathname).default

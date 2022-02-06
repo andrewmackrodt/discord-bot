@@ -1,7 +1,7 @@
-import { NextFunction, Plugin } from '../../types/plugins'
+import { NextFunction, Plugin } from '../../../types/plugins'
 import { TwitterClient } from 'twitter-api-client'
 import Discord, { Message, TextChannel } from 'discord.js'
-import { Schedule } from '../Schedule'
+import { Schedule } from '../../Schedule'
 import UsersLookup from 'twitter-api-client/dist/interfaces/types/UsersLookupTypes'
 
 interface ScreenNameWatcher {
