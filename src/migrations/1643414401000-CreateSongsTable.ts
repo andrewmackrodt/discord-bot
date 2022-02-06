@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, TableForeignKey } from 'typeorm'
+import { MigrationInterface, QueryRunner, Table, TableForeignKey, TableIndex } from 'typeorm'
 
 export class CreateSongsTable1643414401000 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -11,6 +11,10 @@ export class CreateSongsTable1643414401000 implements MigrationInterface {
                     generationStrategy: 'increment',
                     name: 'id',
                     type: 'integer',
+                },
+                {
+                    name: 'server_id',
+                    type: 'text',
                 },
                 {
                     name: 'track_id',
@@ -35,7 +39,20 @@ export class CreateSongsTable1643414401000 implements MigrationInterface {
             ],
         }))
 
+        await queryRunner.createIndices('songs', [
+            new TableIndex({
+                name: 'songs_server_id_track_id_uindex',
+                isUnique: true,
+                columnNames: ['server_id', 'track_id'],
+            }),
+            new TableIndex({
+                name: 'songs_user_id_index',
+                columnNames: ['user_id'] ,
+            }),
+        ])
+
         await queryRunner.createForeignKey('songs', new TableForeignKey({
+            name: 'songs_user_id_users_id_fkey',
             columnNames: ['user_id'],
             referencedColumnNames: ['id'],
             referencedTableName: 'users',

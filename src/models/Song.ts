@@ -2,16 +2,16 @@ import { Column, BaseEntity, Entity, Index, JoinColumn, ManyToOne, PrimaryGenera
 import { User } from './User'
 
 @Entity({ name: 'songs' })
+@Index('songs_server_id_track_id_uindex', ['serverId', 'trackId'], { unique: true })
+@Index('songs_user_id_index', ['userId'])
 export class Song extends BaseEntity {
     @PrimaryGeneratedColumn()
     public id!: number
 
     @Column({ name: 'server_id' })
-    @Index({ unique: true })
     public serverId!: string
 
     @Column({ name: 'track_id' })
-    @Index({ unique: true })
     public trackId!: string
 
     @Column()
@@ -24,7 +24,6 @@ export class Song extends BaseEntity {
     public date!: string
 
     @Column({ name: 'user_id' })
-    @Index()
     public userId!: string
 
     @ManyToOne(() => User, user => user.songs)
