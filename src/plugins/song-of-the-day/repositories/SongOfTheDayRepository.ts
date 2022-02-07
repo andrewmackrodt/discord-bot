@@ -46,7 +46,7 @@ export class SongOfTheDayRepository {
     public async serverContainsSongOfTheDayOnDate(serverId: string, date: string): Promise<boolean> {
         const count = await Song.createQueryBuilder().where({ serverId, date }).getCount()
 
-        return count > 1
+        return count > 0
     }
 
     public async getRandomServerSong(serverId: string): Promise<Song & { user: User } | undefined> {
