@@ -25,6 +25,7 @@ rules:
   quotes:
     - error
     - single
+    - avoidEscape: true
   space-infix-ops:
     - error
   space-unary-ops:
