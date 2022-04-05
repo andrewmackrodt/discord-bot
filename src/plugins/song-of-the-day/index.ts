@@ -1,5 +1,5 @@
 import { CommandUsage, error, getCommandUsage, sendPluginHelpMessage, sendCommandHelpMessage, success } from '../../utils/plugin'
-import Discord, { Message, MessageEmbed, MessageReaction, PartialUser, TextChannel } from 'discord.js'
+import Discord, { Message, MessageEditOptions, MessageEmbed, MessageReaction, PartialUser, TextChannel } from 'discord.js'
 import { NextFunction, Plugin } from '../../../types/plugins'
 import { Schedule } from '../../Schedule'
 import { Song } from './models/Song'
@@ -25,9 +25,9 @@ const commandsUsage: CommandUsage[] = [
         usage: '#sotd history [username?]',
     },
     {
-        command: ['nominate'],
-        title: 'todo',
-        usage: '#sotd nominate',
+        command: ['nominations'],
+        title: 'show song of the day nomination history',
+        usage: '#sotd nominations [username?]',
     },
     {
         command: ['random'],
@@ -71,6 +71,10 @@ export default class SongOfTheDayPlugin implements Plugin {
     private readonly repository = new SongOfTheDayRepository()
     private clientUserId?: string
     private spotifyClients: Record<string, SpotifyClient> = {}
+
+    public async onConnect(client: Discord.Client): Promise<void> {
+        this.clientUserId = client.user?.id
+    }
 
     public registerScheduler(client: Discord.Client, schedule: Schedule) {
         schedule.add('* * * * *', async () => {
@@ -152,6 +156,8 @@ export default class SongOfTheDayPlugin implements Plugin {
                 return this.add(message, params)
             case 'history':
                 return this.history(message, params)
+            case 'nominations':
+                return this.nominations(message, params)
             case 'random':
                 return this.random(message)
             case 'stats':
@@ -235,6 +241,30 @@ export default class SongOfTheDayPlugin implements Plugin {
         return historyMessage
     }
 
+    protected async nominations(message: Message, params: string[] = []): Promise<Message> {
+        const options: SongHistoryOptions = { page: 1 }
+
+        if (params.length > 0) {
+            options.userId = await this.lookupUserId(message.channel as TextChannel, params[0])
+
+            if ( ! options.userId) {
+                return message.channel.send(error(`unknown user: ${params[0]}`))
+            }
+        }
+
+        const embed = await this.getNominationsHistoryEmbed(message.guild!.id, options)
+
+        if ( ! embed) {
+            return message.channel.send('nominations history is empty')
+        }
+
+        const reply = await message.channel.send(embed)
+        await reply.react('⏮')
+        await reply.react('⏭')
+
+        return reply
+    }
+
     public async onMessageReactionAdd(
         reaction: MessageReaction,
         user: Discord.User | PartialUser,
@@ -247,10 +277,16 @@ export default class SongOfTheDayPlugin implements Plugin {
         let page = parseInt(pageStr, 10)
         const userId = /userId(?: |: ?)([0-9]+)/.exec(description ?? '')?.[1]
 
+        let isHistoryReaction = false
+        let isNominationsReaction = false
+
         if ( ! this.clientUserId ||
             this.clientUserId !== message.author.id ||
             ! ['⏮', '⏭'].includes(reaction.emoji.name) ||
-            ! title?.match(/Song of the Day History/i) ||
+            ! (
+                (isHistoryReaction = Boolean(title?.match(/Song of the Day History/i))) ||
+                (isNominationsReaction = Boolean(title?.match(/Song of the Day Nominations History/i)))
+            ) ||
             isNaN(page)
         ) {
             return next()
@@ -267,14 +303,20 @@ export default class SongOfTheDayPlugin implements Plugin {
         }
 
         const options: SongHistoryOptions = { page, userId }
+        let reply: MessageEditOptions | undefined
 
-        const songHistory = await this.getSongHistoryEmbed(message.guild!.id, options)
+        if (isHistoryReaction) {
+            reply = await this.getSongHistoryEmbed(message.guild!.id, options)
+        }
+        else if (isNominationsReaction) {
+            reply = await this.getNominationsHistoryEmbed(message.guild!.id, options)
+        }
 
-        if ( ! songHistory) {
+        if ( ! reply) {
             return
         }
 
-        return message.edit(songHistory)
+        return message.edit(reply)
     }
 
     public async onMessageReactionRemove(
@@ -416,6 +458,48 @@ export default class SongOfTheDayPlugin implements Plugin {
                     {
                         name: `added by ${row.author}`,
                         value: `on ${row.date}`,
+                        inline: true,
+                    },
+                ])).flat(),
+            },
+        }
+    }
+
+    protected async getNominationsHistoryEmbed(serverId: string, options?: SongHistoryOptions) {
+        const page = options?.page ?? 1
+        const offset = (page - 1) * SongOfTheDayPlugin.HISTORY_LIMIT
+
+        const rows = await this.repository.getServerNominationHistory({
+            serverId,
+            userId: options?.userId,
+            limit: SongOfTheDayPlugin.HISTORY_LIMIT,
+            offset,
+        })
+
+        if (rows.length === 0) {
+            return
+        }
+
+        const index = 1 + ((page - 1) * SongOfTheDayPlugin.HISTORY_LIMIT)
+
+        return {
+            embed: {
+                title: ':notepad_spiral: **Song of the Day Nominations History**',
+                description: JSON.stringify(options).replace(/["{}]/g, '').replace(/:/g, ': ').replace(/,/g, ' | '),
+                fields: rows.map((row, i) => ([
+                    {
+                        name: '#',
+                        value: index + i,
+                        inline: true,
+                    },
+                    {
+                        name: 'date',
+                        value: row.date,
+                        inline: true,
+                    },
+                    {
+                        name: 'username',
+                        value: row.username,
                         inline: true,
                     },
                 ])).flat(),

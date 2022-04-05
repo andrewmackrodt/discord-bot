@@ -19,6 +19,11 @@ interface ServerHistoryRow {
     track_id: string
 }
 
+interface ServerNominationHistoryRow {
+    date: string
+    username: string
+}
+
 interface ServerStatsRow {
     name: string
     first_added: string
@@ -70,6 +75,22 @@ export class SongOfTheDayRepository {
         }
 
         return await query.getRawMany() as ServerHistoryRow[]
+    }
+
+    public async getServerNominationHistory(params: ServerHistoryParams): Promise<ServerNominationHistoryRow[]> {
+        let query = Song.createQueryBuilder('sotd_nominations')
+            .innerJoin('sotd_nominations.user', 'users')
+            .select(['date', 'users.name as username'])
+            .where({ serverId: params.serverId })
+            .orderBy('date', 'DESC')
+            .orderBy('sotd_nominations.id', 'DESC')
+            .limit(params.limit).offset(params.offset)
+
+        if (params.userId) {
+            query = query.andWhere('sotd_nominations.user_id = :userId', { userId: params.userId })
+        }
+
+        return await query.getRawMany() as ServerNominationHistoryRow[]
     }
 
     public async getServerSettings(serverId: string): Promise<SongOfTheDaySettings | undefined> {
