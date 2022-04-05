@@ -78,16 +78,16 @@ export class SongOfTheDayRepository {
     }
 
     public async getServerNominationHistory(params: ServerHistoryParams): Promise<ServerNominationHistoryRow[]> {
-        let query = Song.createQueryBuilder('sotd_nominations')
-            .innerJoin('sotd_nominations.user', 'users')
+        let query = SongOfTheDayNomination.createQueryBuilder('nominations')
+            .innerJoin('nominations.user', 'users')
             .select(['date', 'users.name as username'])
             .where({ serverId: params.serverId })
             .orderBy('date', 'DESC')
-            .orderBy('sotd_nominations.id', 'DESC')
+            .orderBy('nominations.id', 'DESC')
             .limit(params.limit).offset(params.offset)
 
         if (params.userId) {
-            query = query.andWhere('sotd_nominations.user_id = :userId', { userId: params.userId })
+            query = query.andWhere('nominations.user_id = :userId', { userId: params.userId })
         }
 
         return await query.getRawMany() as ServerNominationHistoryRow[]
