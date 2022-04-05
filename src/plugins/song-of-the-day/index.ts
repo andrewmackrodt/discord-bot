@@ -352,7 +352,7 @@ export default class SongOfTheDayPlugin implements Plugin {
                 }
 
                 await channel.send(`**<@${user.id}> you have been chosen to select the song of the day** :musical_note:`)
-
+                await this.repository.addNomination(guild.id, user.id, now)
                 await this.repository.updateSettingsNotificationEvent(
                     settings,
                     NotificationEventType.PICK,

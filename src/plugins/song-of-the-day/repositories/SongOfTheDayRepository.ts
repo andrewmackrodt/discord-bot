@@ -1,5 +1,6 @@
 import { Song } from '../models/Song'
 import { NotificationEventType, SongOfTheDaySettings } from '../models/SongOfTheDaySettings'
+import { SongOfTheDayNomination } from '../models/SongOfTheDayNomination'
 import { User } from '../../../models/User'
 import { ymd } from '../../../utils/date'
 
@@ -125,6 +126,15 @@ export class SongOfTheDayRepository {
             .orderBy('random()')
             .limit(1)
             .getOne()
+    }
+
+    public async addNomination(serverId: string, userId: string, date: Date): Promise<SongOfTheDayNomination> {
+        const nomination = new SongOfTheDayNomination()
+        nomination.serverId = serverId
+        nomination.userId = userId
+        nomination.date = ymd(date)
+
+        return await nomination.save()
     }
 
     public async updateSettingsNotificationEvent(
