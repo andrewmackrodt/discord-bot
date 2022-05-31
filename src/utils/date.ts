@@ -1,12 +1,18 @@
+// curl -s https://www.gov.uk/bank-holidays.json | jq -r '.["england-and-wales"].events[] | "\"\(.date)\", // \(.title)"' | grep 202 | sed 's/"'"/'/g"
 export const bankHolidays = [
-    '2022-01-03',
-    '2022-04-15',
-    '2022-04-18',
-    '2022-05-02',
-    '2022-06-03',
-    '2022-08-29',
-    '2022-12-26',
-    '2022-12-27',
+    '2022-06-02', // Spring bank holiday
+    '2022-06-03', // Platinum Jubilee bank holiday
+    '2022-08-29', // Summer bank holiday
+    '2022-12-26', // Boxing Day
+    '2022-12-27', // Christmas Day
+    '2023-01-02', // New Year’s Day
+    '2023-04-07', // Good Friday
+    '2023-04-10', // Easter Monday
+    '2023-05-01', // Early May bank holiday
+    '2023-05-29', // Spring bank holiday
+    '2023-08-28', // Summer bank holiday
+    '2023-12-25', // Christmas Day
+    '2023-12-26', // Boxing Day
 ]
 
 export function ymd(date: Date | string = new Date()): string {
