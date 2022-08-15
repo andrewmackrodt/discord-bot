@@ -1,5 +1,5 @@
-import type { Message, MessageReaction, PartialUser, User } from 'discord.js'
-import Discord from 'discord.js'
+import type { Message, MessageReaction, PartialUser, User , PartialMessageReaction } from 'discord.js'
+import Discord, { GatewayIntentBits } from 'discord.js'
 import { dataSource } from './db'
 import { Schedule } from './Schedule'
 import type { Plugin } from '../types/plugins'
@@ -26,13 +26,21 @@ const forward = <T extends Plugin>(dispatch: (plugin: T) => any, stack: T[]) => 
 }
 
 export class Client {
-    protected readonly client = new Discord.Client()
+    protected readonly client: Discord.Client
     protected readonly schedule = new Schedule()
 
     public constructor(
         protected readonly token: string,
         protected readonly plugins: Plugin[],
     ) {
+        this.client = new Discord.Client({
+            intents: [
+                GatewayIntentBits.Guilds,
+                GatewayIntentBits.GuildMessages,
+                GatewayIntentBits.GuildMessageReactions,
+                GatewayIntentBits.MessageContent,
+            ],
+        })
     }
 
     public async start(): Promise<void> {
@@ -47,7 +55,7 @@ export class Client {
         // assign handler functions
         this.client.on('error', this.onError)
         this.client.on('ready', this.onReady)
-        this.client.on('message', this.onMessage)
+        this.client.on('messageCreate', this.onMessage)
         this.client.on('messageReactionAdd', this.onMessageReactionAdd)
         this.client.on('messageReactionRemove', this.onMessageReactionRemove)
 
@@ -123,7 +131,10 @@ export class Client {
         }
     }
 
-    protected onMessageReactionAdd = async (reaction: MessageReaction, user: User | PartialUser): Promise<void> => {
+    protected onMessageReactionAdd = async (
+        reaction: MessageReaction | PartialMessageReaction,
+        user: User | PartialUser,
+    ): Promise<void> => {
         if (user.bot || ! reaction.message.guild) {
             return
         }
@@ -145,7 +156,10 @@ export class Client {
         }
     }
 
-    protected onMessageReactionRemove = async (reaction: MessageReaction, user: User | PartialUser): Promise<void> => {
+    protected onMessageReactionRemove = async (
+        reaction: MessageReaction | PartialMessageReaction,
+        user: User | PartialUser,
+    ): Promise<void> => {
         if (user.bot || ! reaction.message.guild) {
             return
         }

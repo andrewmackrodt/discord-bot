@@ -30,6 +30,9 @@ export default class XkcdPlugin implements Plugin {
             src = `https:${src}`
         }
 
-        return msg.channel.send(src, { embed: { title, image: { url: src } } })
+        return msg.channel.send({
+            content: src,
+            embeds: [{ title, image: { url: src } }],
+        })
     }
 }

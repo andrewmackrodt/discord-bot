@@ -1,4 +1,5 @@
-import type { Message, MessageEditOptions, MessageEmbed, MessageReaction, PartialUser, TextChannel } from 'discord.js'
+import { ChannelType, APIEmbedField } from 'discord.js'
+import type { Message, MessageEditOptions, MessageReaction, PartialMessageReaction, PartialUser, TextChannel , MessageCreateOptions } from 'discord.js'
 import type Discord from 'discord.js'
 import SpotifyWebApi from 'spotify-web-api-node'
 import type { Song } from './models/Song'
@@ -269,12 +270,17 @@ export default class SongOfTheDayPlugin implements Plugin {
     }
 
     public async onMessageReactionAdd(
-        reaction: MessageReaction,
+        reaction: MessageReaction | PartialMessageReaction,
         user: Discord.User | PartialUser,
         next: NextFunction,
     ) {
         const message = reaction.message
-        const embed = reaction.message.embeds[0] as MessageEmbed | undefined
+
+        if ( ! message.author || ! reaction.emoji.name) {
+            return
+        }
+
+        const embed = reaction.message.embeds[0]
         const { title, description } = embed ?? {}
         const pageStr = /page(?: |: ?)([0-9]+)/.exec(description ?? '')?.[1] ?? ''
         let page = parseInt(pageStr, 10)
@@ -306,7 +312,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         }
 
         const options: SongHistoryOptions = { page, userId }
-        let reply: MessageEditOptions | undefined
+        let reply: Pick<MessageEditOptions, 'embeds'> | undefined
 
         if (isHistoryReaction) {
             reply = await this.getSongHistoryEmbed(message.guild!.id, options)
@@ -323,7 +329,7 @@ export default class SongOfTheDayPlugin implements Plugin {
     }
 
     public async onMessageReactionRemove(
-        reaction: MessageReaction,
+        reaction: MessageReaction | PartialMessageReaction,
         user: Discord.User | PartialUser,
         next: NextFunction,
     ) {
@@ -370,7 +376,7 @@ export default class SongOfTheDayPlugin implements Plugin {
 
         const _channel = guild.channels.cache.get(settings.notificationsChannelId)
 
-        if ( ! _channel || _channel.type !== 'text') {
+        if ( ! _channel || _channel.type !== ChannelType.GuildText) {
             console.error(`songOfTheDay: server ${guild.id} has bad notifications channel configuration`)
         }
 
@@ -426,7 +432,10 @@ export default class SongOfTheDayPlugin implements Plugin {
         return await this.repository.addSongOfTheDay(serverId, user, track)
     }
 
-    protected async getSongHistoryEmbed(serverId: string, options?: SongHistoryOptions) {
+    protected async getSongHistoryEmbed(
+        serverId: string,
+        options?: SongHistoryOptions,
+    ): Promise<MessageCreateOptions | undefined> {
         const page = options?.page ?? 1
         const offset = (page - 1) * SongOfTheDayPlugin.HISTORY_LIMIT
 
@@ -444,13 +453,13 @@ export default class SongOfTheDayPlugin implements Plugin {
         const firstSongIndex = 1 + ((page - 1) * SongOfTheDayPlugin.HISTORY_LIMIT)
 
         return {
-            embed: {
+            embeds: [{
                 title: ':notepad_spiral: **Song of the Day History**',
                 description: JSON.stringify(options).replace(/["{}]/g, '').replace(/:/g, ': ').replace(/,/g, ' | '),
                 fields: rows.map((row, i) => ([
                     {
                         name: '#',
-                        value: firstSongIndex + i,
+                        value: (firstSongIndex + i).toString(10),
                         inline: true,
                     },
                     {
@@ -464,11 +473,14 @@ export default class SongOfTheDayPlugin implements Plugin {
                         inline: true,
                     },
                 ])).flat(),
-            },
+            }],
         }
     }
 
-    protected async getNominationsHistoryEmbed(serverId: string, options?: SongHistoryOptions) {
+    protected async getNominationsHistoryEmbed(
+        serverId: string,
+        options?: SongHistoryOptions,
+    ): Promise<MessageCreateOptions | undefined> {
         const page = options?.page ?? 1
         const offset = (page - 1) * SongOfTheDayPlugin.HISTORY_LIMIT
 
@@ -486,13 +498,13 @@ export default class SongOfTheDayPlugin implements Plugin {
         const index = 1 + ((page - 1) * SongOfTheDayPlugin.HISTORY_LIMIT)
 
         return {
-            embed: {
+            embeds: [{
                 title: ':notepad_spiral: **Song of the Day Nominations History**',
                 description: JSON.stringify(options).replace(/["{}]/g, '').replace(/:/g, ': ').replace(/,/g, ' | '),
                 fields: rows.map((row, i) => ([
                     {
                         name: '#',
-                        value: index + i,
+                        value: (index + i).toString(10),
                         inline: true,
                     },
                     {
@@ -506,7 +518,7 @@ export default class SongOfTheDayPlugin implements Plugin {
                         inline: true,
                     },
                 ])).flat(),
-            },
+            }],
         }
     }
 
