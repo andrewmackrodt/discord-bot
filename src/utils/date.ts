@@ -1,8 +1,6 @@
 // curl -s https://www.gov.uk/bank-holidays.json | jq -r '.["england-and-wales"].events[] | "\"\(.date)\", // \(.title)"' | grep 202 | sed 's/"'"/'/g"
 export const bankHolidays = [
-    '2022-06-02', // Spring bank holiday
-    '2022-06-03', // Platinum Jubilee bank holiday
-    '2022-08-29', // Summer bank holiday
+    '2022-09-19', // Bank Holiday for the State Funeral of Queen Elizabeth II
     '2022-12-26', // Boxing Day
     '2022-12-27', // Christmas Day
     '2023-01-02', // New Year’s Day
