@@ -32,6 +32,7 @@
     "glob": "^8.0.3",
     "gm": "^1.25.0",
     "node-schedule": "^2.1.0",
+    "openai": "^3.1.0",
     "reflect-metadata": "^0.1.13",
     "spotify-web-api-node": "^5.0.2",
     "tslib": "^2.4.1",
