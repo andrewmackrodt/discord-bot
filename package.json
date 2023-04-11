@@ -37,7 +37,7 @@
     "spotify-web-api-node": "^5.0.2",
     "tslib": "^2.4.1",
     "twitter-api-client": "^1.6.1",
-    "typeorm": "^0.2.45"
+    "typeorm": "^0.3.14"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.2",
