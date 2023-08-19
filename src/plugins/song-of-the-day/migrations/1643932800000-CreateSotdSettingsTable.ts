@@ -9,23 +9,23 @@ export class CreateSotdSettingsTable1643932800000 implements MigrationInterface 
                 {
                     isPrimary: true,
                     name: 'server_id',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'spotify_client_id',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'spotify_client_secret',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'spotify_refresh_token',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'spotify_playlist_id',
-                    type: 'text',
+                    type: 'varchar',
                 },
             ],
         }))

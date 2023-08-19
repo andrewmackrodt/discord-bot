@@ -20,8 +20,6 @@ glob.sync(`${__dirname}/src/plugins/*/assets`).map(filepath => {
     copySync(filepath, dest)
 })
 
-copySync(`${__dirname}/ormconfig.json`, `${distPath}/ormconfig.json`)
-
 const packageJsonFilepath = `${distPath}/package.json`
 const packageLockFilepath = `${distPath}/package-lock.json`
 let packageLockExists = existsSync(packageLockFilepath)
@@ -30,7 +28,10 @@ let packageLockExists = existsSync(packageLockFilepath)
 // e.g. during docker build
 if ( ! existsSync(packageJsonFilepath)) {
     const packageJson = JSON.parse(readFileSync(`${__dirname}/package.json`).toString('utf8'))
-    packageJson.scripts = { start: 'node index.js' }
+    packageJson.scripts = {
+        typeorm: 'typeorm -d src/db.js',
+        start: 'node index.js',
+    }
     delete packageJson.devDependencies
     writeFileSync(packageJsonFilepath, JSON.stringify(packageJson, null, 2))
     packageLockExists = false

@@ -9,7 +9,7 @@ WORKDIR /opt/app
 RUN npm i --silent --no-progress \
  && mkdir out \
  && cat package.json \
-      | json -q -e 'this.scripts = { "start": "node index.js" }; delete this.devDependencies' \
+      | json -q -e 'this.scripts = { "typeorm": "typeorm -d src/db.js", "start": "node index.js" }; delete this.devDependencies' \
       | tee out/package.json >/dev/null \
  && npm i --silent --no-progress --omit=dev --package-lock-only --prefix=out/ \
  && cd out \

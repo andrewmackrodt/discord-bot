@@ -9,11 +9,11 @@ export class CreateUsersTable1643414400000 implements MigrationInterface {
                 {
                     isPrimary: true,
                     name: 'id',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'name',
-                    type: 'text',
+                    type: 'varchar',
                 },
             ],
         }))

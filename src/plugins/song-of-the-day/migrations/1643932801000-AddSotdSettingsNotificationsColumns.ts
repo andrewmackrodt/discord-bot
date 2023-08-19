@@ -6,17 +6,17 @@ export class AddSotdSettingsNotificationsColumns1643932801000 implements Migrati
         await queryRunner.addColumns('sotd_settings', [
             new TableColumn({
                 name: 'notifications_channel_id',
-                type: 'text',
+                type: 'varchar',
                 isNullable: true,
             }),
             new TableColumn({
                 name: 'notifications_last_event_type',
-                type: 'text',
+                type: 'varchar',
                 isNullable: true,
             }),
             new TableColumn({
                 name: 'notifications_last_event_time',
-                type: 'text',
+                type: 'varchar',
                 isNullable: true,
             }),
         ])

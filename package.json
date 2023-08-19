@@ -18,7 +18,7 @@
     "lint:fix": "eslint --ext ts --fix .",
     "lint:review": "eslint --ext ts --format rdjson . | reviewdog -f=rdjson -reporter=github-pr-review",
     "start": "ts-node index",
-    "typeorm": "ts-node ./node_modules/typeorm/cli",
+    "typeorm": "ts-node ./node_modules/typeorm/cli -d src/db.ts",
     "watch": "ts-node-dev --respawn --transpile-only index"
   },
   "dependencies": {

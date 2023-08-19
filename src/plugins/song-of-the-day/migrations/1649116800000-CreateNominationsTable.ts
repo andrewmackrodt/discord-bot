@@ -15,15 +15,15 @@ export class CreateNominationsTable1649116800000 implements MigrationInterface {
                 },
                 {
                     name: 'server_id',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'user_id',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'date',
-                    type: 'text',
+                    type: 'varchar',
                 },
             ],
         }))

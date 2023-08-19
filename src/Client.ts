@@ -1,7 +1,7 @@
 import type { Message, MessageReaction, PartialUser, User } from 'discord.js'
 import Discord from 'discord.js'
 import type { Connection } from 'typeorm'
-import { createConnection } from 'typeorm'
+import { dataSource } from './db'
 import { Schedule } from './Schedule'
 import type { Plugin } from '../types/plugins'
 
@@ -43,7 +43,7 @@ export class Client {
         process.on('SIGTERM', this.cleanup)
 
         // create database connection and run migrations
-        this.db = await createConnection()
+        this.db = await dataSource.connect()
         await this.db.runMigrations()
 
         // assign handler functions

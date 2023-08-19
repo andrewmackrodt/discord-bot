@@ -15,27 +15,27 @@ export class CreateSongsTable1643414401000 implements MigrationInterface {
                 },
                 {
                     name: 'server_id',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'track_id',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'artist',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'title',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'date',
-                    type: 'text',
+                    type: 'varchar',
                 },
                 {
                     name: 'user_id',
-                    type: 'text',
+                    type: 'varchar',
                 },
             ],
         }))
