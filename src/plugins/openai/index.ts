@@ -31,27 +31,24 @@ export default class OpenAIPlugin implements Plugin {
             return msg.reply('the openai plugin is not correctly configured, please contact the server admin')
         }
 
-        let question = msg.content.replace(/^!ask[ \t]*/, '').trim()
+        const content = msg.content.replace(/^!ask[ \t]*/, '')
+            .trim()
+            .replace(/[ ?]+$/, '') + '?'
 
-        if (question.length === 0) {
+        if (content.length < 11) {
             return msg.reply('usage: `!ask what is the meaning of life?`')
         }
 
-        if (question[question.length - 1] !== '?') {
-            question += '?'
-        }
-
-        const response = await this.openai.completions.create({
-            model: 'text-davinci-003',
-            prompt: `Marv is a chatbot that reluctantly answers questions with sarcastic responses:\n\nYou: ${question}\nMarv:`,
-            temperature: 0.5,
-            max_tokens: 60,
-            top_p: 0.3,
+        const response = await this.openai.chat.completions.create({
+            model: 'gpt-4',
+            messages: [{ role: 'user', content }],
+            max_tokens: 1000,
             frequency_penalty: 0.5,
             presence_penalty: 0.0,
+            temperature: 0.5,
         })
 
-        const reply = response.choices.map(choice => choice.text?.trim()).join(' ')
+        const reply = response.choices.map(choice => choice.message.content?.trim()).join(' ')
 
         return msg.reply(reply)
     }
