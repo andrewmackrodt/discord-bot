@@ -1,16 +1,24 @@
 // curl -s https://www.gov.uk/bank-holidays.json | jq -r '.["england-and-wales"].events[] | "\"\(.date)\", // \(.title)"' | grep 202 | sed 's/"'"/'/g"
 export const bankHolidays = [
-    '2022-09-19', // Bank Holiday for the State Funeral of Queen Elizabeth II
-    '2022-12-26', // Boxing Day
-    '2022-12-27', // Christmas Day
-    '2023-01-02', // New Year’s Day
-    '2023-04-07', // Good Friday
-    '2023-04-10', // Easter Monday
-    '2023-05-01', // Early May bank holiday
-    '2023-05-29', // Spring bank holiday
     '2023-08-28', // Summer bank holiday
     '2023-12-25', // Christmas Day
     '2023-12-26', // Boxing Day
+    '2024-01-01', // New Year’s Day
+    '2024-03-29', // Good Friday
+    '2024-04-01', // Easter Monday
+    '2024-05-06', // Early May bank holiday
+    '2024-05-27', // Spring bank holiday
+    '2024-08-26', // Summer bank holiday
+    '2024-12-25', // Christmas Day
+    '2024-12-26', // Boxing Day
+    '2025-01-01', // New Year’s Day
+    '2025-04-18', // Good Friday
+    '2025-04-21', // Easter Monday
+    '2025-05-05', // Early May bank holiday
+    '2025-05-26', // Spring bank holiday
+    '2025-08-25', // Summer bank holiday
+    '2025-12-25', // Christmas Day
+    '2025-12-26', // Boxing Day
 ]
 
 export function ymd(date: Date | string = new Date()): string {
