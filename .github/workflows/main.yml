@@ -7,17 +7,17 @@ on:
   pull_request:
 
 env:
-  PRIMARY_NODE_VERSION: 14
+  PRIMARY_NODE_VERSION: 18
 
 jobs:
   lint:
     name: Code Style
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Use Node.js v${{ env.PRIMARY_NODE_VERSION }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
 
@@ -25,7 +25,7 @@ jobs:
         id: npm-cache-dir-path
         run: echo "::set-output name=dir::$(npm config get cache || echo "$HOME/.npm")"
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: npm-cache
         with:
           path: ${{ steps.npm-cache-dir-path.outputs.dir }}

@@ -1,25 +1,32 @@
-# discord-bot
+# discord-bot 👾
 
-A Node.JS Discord
+Node.js Discord Bot.
 
-## Quick Start
+## Requirements
 
-```sh
-git clone https://github.com/andrewmackrodt/discord-bot.git
-cd discord-bot
-npm install
-cp .env.sample .env
-${EDITOR:-editor} .env # set DISCORD_TOKEN in .env
-npm run start
-```
+**Operating System**: 🍏 macOS or 🐧 Linux. 🪟 Windows has not been tested.
 
-## npm commands
+**Runtime:** Node 18+, npm
 
-| Command | Description |
-|---|---|
-| `build` | Creates the dist build in `./dist` and installs production dependencies |
-| `dist` | Creates the dist build in `./dist` |
-| `lint` | Runs ESLint |
-| `lint:fix` | Runs ESLint and attempts fixes |
-| `start` | Starts the project |
-| `watch` | Starts the project and reloads if files are changed |
+## Installation
+
+- Ensure Node 18+ and npm are available.
+  - If Node is not installed or less than the required version, you can run `./setup.sh` which will download a compatible runtime using [nvm](https://github.com/nvm-sh/nvm#about).
+- Clone the repository and open a terminal in the project directory.
+- Run `npm install` to download package dependencies.
+- Copy `.env.sample` to `.env` and open in a text editor. You **must** set `DISCORD_TOKEN`.
+
+## Usage
+
+Run `npm start` to start the bot.
+
+### Additional Commands
+
+| Command                        | Description                                     |
+|--------------------------------|-------------------------------------------------|
+| `npm run build`                | Compile prod version to `./out`                 |
+| `npm run lint`                 | Run ESLint                                      |
+| `npm run lint:fix`             | Run ESLint and attempts fixes                   |
+| `npm run typeorm -- [options]` | Run TypeORM cli commands                        |
+| `npm run start`                | Start the bot                                   |
+| `npm run watch`                | Start the bot and restarts if files are changed |
