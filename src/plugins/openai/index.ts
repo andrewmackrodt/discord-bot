@@ -1,10 +1,10 @@
 import { NextFunction, Plugin } from '../../../types/plugins'
 import { Message } from 'discord.js'
-import { Configuration, OpenAIApi } from 'openai'
+import { OpenAI } from 'openai'
 
 export default class OpenAIPlugin implements Plugin {
     private _isSupported?: boolean
-    private _openai?: OpenAIApi
+    private _openai?: OpenAI
 
     protected get isSupported(): boolean {
         if (typeof this._isSupported === 'undefined') {
@@ -14,9 +14,9 @@ export default class OpenAIPlugin implements Plugin {
         return this._isSupported
     }
 
-    protected get openai(): OpenAIApi {
+    protected get openai(): OpenAI {
         if ( ! this._openai) {
-            this._openai = new OpenAIApi(new Configuration({ apiKey: process.env.OPENAI_API_KEY }))
+            this._openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
         }
 
         return this._openai
@@ -41,7 +41,7 @@ export default class OpenAIPlugin implements Plugin {
             question += '?'
         }
 
-        const response = await this.openai.createCompletion({
+        const response = await this.openai.completions.create({
             model: 'text-davinci-003',
             prompt: `Marv is a chatbot that reluctantly answers questions with sarcastic responses:\n\nYou: ${question}\nMarv:`,
             temperature: 0.5,
@@ -51,7 +51,7 @@ export default class OpenAIPlugin implements Plugin {
             presence_penalty: 0.0,
         })
 
-        const reply = response.data.choices.map(choice => choice.text?.trim()).join(' ')
+        const reply = response.choices.map(choice => choice.text?.trim()).join(' ')
 
         return msg.reply(reply)
     }

@@ -93,8 +93,8 @@ export class SongOfTheDayRepository {
         return await query.getRawMany() as ServerNominationHistoryRow[]
     }
 
-    public async getServerSettings(serverId: string): Promise<SongOfTheDaySettings | undefined> {
-        return await SongOfTheDaySettings.findOne({ where: { serverId } })
+    public async getServerSettings(serverId: string): Promise<SongOfTheDaySettings | null> {
+        return await SongOfTheDaySettings.findOneBy({ serverId })
     }
 
     public async getServerStats(serverId: string): Promise<ServerStatsRow[]> {
@@ -120,7 +120,7 @@ export class SongOfTheDayRepository {
     }
 
     public async getOrCreateUser(params: { id: string; username: string }): Promise<User> {
-        let user = await User.getRepository().findOne({ where: { id: params.id } })
+        let user = await User.getRepository().findOneBy({ id: params.id })
 
         if ( ! user) {
             user = new User()
@@ -132,11 +132,11 @@ export class SongOfTheDayRepository {
         return user
     }
 
-    public async getUserByName(name: string): Promise<User | undefined> {
-        return await User.findOne({ name: name })
+    public async getUserByName(name: string): Promise<User | null> {
+        return await User.findOneBy({ name })
     }
 
-    public async getRandomServerUserWithPastSongOfTheDay(serverId: string): Promise<User | undefined> {
+    public async getRandomServerUserWithPastSongOfTheDay(serverId: string): Promise<User | null> {
         return await User.createQueryBuilder('users')
             .innerJoin(qb => qb.from(Song, 'songs')
                     .select('user_id')

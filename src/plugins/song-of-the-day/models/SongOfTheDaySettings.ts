@@ -8,7 +8,7 @@ export enum NotificationEventType {
 @Entity({ name: 'sotd_settings' })
 export class SongOfTheDaySettings extends BaseEntity {
     @PrimaryColumn({ name: 'server_id' })
-    public serverId!: number
+    public serverId!: string
 
     @Column({ name: 'spotify_client_id' })
     public spotifyClientId!: string

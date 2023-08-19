@@ -1,4 +1,4 @@
-import { Column, BaseEntity, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, BaseEntity, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Relation } from 'typeorm'
 import { User } from '../../../models/User'
 
 @Entity({ name: 'songs' })
@@ -28,5 +28,5 @@ export class Song extends BaseEntity {
 
     @ManyToOne(() => User, user => user.songs)
     @JoinColumn({ name: 'user_id' })
-    public user?: User
+    public user?: Relation<User>
 }

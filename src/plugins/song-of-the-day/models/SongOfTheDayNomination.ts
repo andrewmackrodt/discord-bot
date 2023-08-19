@@ -1,4 +1,4 @@
-import { Column, BaseEntity, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm'
+import { Column, BaseEntity, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Relation } from 'typeorm'
 import { User } from '../../../models/User'
 
 @Entity({ name: 'sotd_nominations' })
@@ -17,5 +17,5 @@ export class SongOfTheDayNomination extends BaseEntity {
 
     @ManyToOne(() => User, user => user.nominations)
     @JoinColumn({ name: 'user_id' })
-    public user?: User
+    public user?: Relation<User>
 }

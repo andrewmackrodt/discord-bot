@@ -3,7 +3,7 @@ import 'reflect-metadata'
 import { Client } from './src/Client'
 import { Plugin } from './types/plugins'
 import dotenv from 'dotenv'
-import glob from 'glob'
+import { glob } from 'glob'
 import path from 'path'
 
 dotenv.config()

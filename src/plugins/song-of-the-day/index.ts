@@ -186,7 +186,7 @@ export default class SongOfTheDayPlugin implements Plugin {
             return message.channel.send(error('song of the day must be unique'))
         }
 
-        const spotify = await this.spotify(message.guild!.id)
+        const spotify = await this.spotify(serverId)
 
         if ( ! spotify) {
             return message.channel.send(
