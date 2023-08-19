@@ -1,4 +1,7 @@
 {
+  "ts-node": {
+    "swc": true
+  },
   "compilerOptions": {
     "baseUrl": "./src",
     "emitDecoratorMetadata": true,

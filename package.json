@@ -13,15 +13,15 @@
     "build": "npm-run-all dist build:deps",
     "build:deps": "npm ci --silent --no-progress --production --prefix=dist/",
     "dist": "npm-run-all clean dist:bundle",
-    "dist:bundle": "ts-node-dev package",
+    "dist:bundle": "ts-node-dev --transpile-only package",
     "clean": "shx rm -rf dist/",
     "lint": "eslint --ext ts .",
     "lint:check": "eslint --ext ts --format rdjson . | reviewdog -f=rdjson -reporter=github-check",
     "lint:fix": "eslint --ext ts --fix .",
     "lint:review": "eslint --ext ts --format rdjson . | reviewdog -f=rdjson -reporter=github-pr-review",
-    "start": "ts-node-dev index",
-    "typeorm": "ts-node-dev ./node_modules/typeorm/cli",
-    "watch": "ts-node-dev --respawn index"
+    "start": "ts-node index",
+    "typeorm": "ts-node ./node_modules/typeorm/cli",
+    "watch": "ts-node-dev --respawn --transpile-only index"
   },
   "dependencies": {
     "axios": "^1.4.0",
@@ -40,6 +40,8 @@
     "typeorm": "^0.3.17"
   },
   "devDependencies": {
+    "@swc/core": "^1.3.78",
+    "@swc/helpers": "^0.5.1",
     "@types/better-sqlite3": "^7.6.4",
     "@types/cheerio": "^0.22.31",
     "@types/fs-extra": "^11.0.1",
