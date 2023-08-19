@@ -1,4 +1,5 @@
-import Discord, { Message } from 'discord.js'
+import type { Message } from 'discord.js'
+import type Discord from 'discord.js'
 import { padRight } from './string'
 
 export interface CommandUsage {

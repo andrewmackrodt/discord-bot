@@ -1,6 +1,6 @@
-import { Message } from 'discord.js'
-import { Plugin, NextFunction } from '../../../types/plugins'
 import axios from 'axios'
+import type { Message } from 'discord.js'
+import type { Plugin, NextFunction } from '../../../types/plugins'
 
 const url = 'http://yerkee.com/api/fortune'
 

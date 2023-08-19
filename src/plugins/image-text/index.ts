@@ -1,7 +1,7 @@
-import { Message } from 'discord.js'
-import { Plugin, NextFunction } from '../../../types/plugins'
+import path from 'node:path'
+import type { Message } from 'discord.js'
 import { subClass } from 'gm'
-import path from 'path'
+import type { Plugin, NextFunction } from '../../../types/plugins'
 
 interface Text {
     x: number

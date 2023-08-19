@@ -1,8 +1,9 @@
-import { Song } from '../models/Song'
-import { NotificationEventType, SongOfTheDaySettings } from '../models/SongOfTheDaySettings'
-import { SongOfTheDayNomination } from '../models/SongOfTheDayNomination'
 import { User } from '../../../models/User'
 import { ymd } from '../../../utils/date'
+import { Song } from '../models/Song'
+import { SongOfTheDayNomination } from '../models/SongOfTheDayNomination'
+import type { NotificationEventType } from '../models/SongOfTheDaySettings'
+import { SongOfTheDaySettings } from '../models/SongOfTheDaySettings'
 
 interface ServerHistoryParams {
     serverId: string

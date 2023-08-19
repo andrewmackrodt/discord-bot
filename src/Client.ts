@@ -1,7 +1,9 @@
-import { Plugin } from '../types/plugins'
-import Discord, { Message, MessageReaction, PartialUser, User } from 'discord.js'
-import { Connection, createConnection } from 'typeorm'
+import type { Message, MessageReaction, PartialUser, User } from 'discord.js'
+import Discord from 'discord.js'
+import type { Connection } from 'typeorm'
+import { createConnection } from 'typeorm'
 import { Schedule } from './Schedule'
+import type { Plugin } from '../types/plugins'
 
 type ErrorType = Error | string
 

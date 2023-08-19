@@ -1,4 +1,5 @@
-import { Column, BaseEntity, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Relation } from 'typeorm'
+import type { Relation } from 'typeorm'
+import { Column, BaseEntity, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm'
 import { User } from '../../../models/User'
 
 @Entity({ name: 'sotd_nominations' })

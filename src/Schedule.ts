@@ -1,4 +1,5 @@
-import { Job, RecurrenceRule, gracefulShutdown, scheduleJob } from 'node-schedule'
+import type { Job, RecurrenceRule } from 'node-schedule'
+import { gracefulShutdown, scheduleJob } from 'node-schedule'
 
 export class Schedule {
     protected readonly jobs: Job[] = []

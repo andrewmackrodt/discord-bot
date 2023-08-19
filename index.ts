@@ -1,10 +1,10 @@
 import 'reflect-metadata'
 
-import { Client } from './src/Client'
-import { Plugin } from './types/plugins'
+import path from 'node:path'
 import dotenv from 'dotenv'
 import { glob } from 'glob'
-import path from 'path'
+import { Client } from './src/Client'
+import type { Plugin } from './types/plugins'
 
 dotenv.config()
 

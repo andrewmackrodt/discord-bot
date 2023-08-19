@@ -1,7 +1,7 @@
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { copySync } from 'fs-extra'
-import { exec } from 'shelljs'
 import { glob } from 'glob'
-import { mkdirSync, readFileSync, writeFileSync } from 'fs'
+import { exec } from 'shelljs'
 
 const distPath = `${__dirname}/dist`
 

@@ -1,5 +1,5 @@
-import { Client, Message, MessageReaction, PartialUser, User } from 'discord.js'
-import { Schedule } from '../src/Schedule'
+import type { Client, Message, MessageReaction, PartialUser, User } from 'discord.js'
+import type { Schedule } from '../src/Schedule'
 
 export type NextFunction = (err?: string | Error) => Promise<any>
 

@@ -1,6 +1,6 @@
-import { NextFunction, Plugin } from '../../../types/plugins'
-import { Message } from 'discord.js'
+import type { Message } from 'discord.js'
 import { OpenAI } from 'openai'
+import type { NextFunction, Plugin } from '../../../types/plugins'
 
 export default class OpenAIPlugin implements Plugin {
     private _isSupported?: boolean
