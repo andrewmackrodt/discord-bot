@@ -10,11 +10,9 @@
     "url": "https://gitlab.com/andrewmackrodt/discord-bot"
   },
   "scripts": {
-    "build": "npm-run-all dist build:deps",
-    "build:deps": "npm ci --silent --no-progress --production --prefix=dist/",
-    "dist": "npm-run-all clean dist:bundle",
-    "dist:bundle": "ts-node-dev --transpile-only package",
-    "clean": "shx rm -rf dist/",
+    "build": "npm-run-all clean build:compile",
+    "build:compile": "ts-node build",
+    "clean": "shx rm -rf out/",
     "lint": "eslint --ext ts .",
     "lint:check": "eslint --ext ts --format rdjson . | reviewdog -f=rdjson -reporter=github-check",
     "lint:fix": "eslint --ext ts --fix .",

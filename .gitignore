@@ -1,8 +1,8 @@
 /config
-/dist
 /node_modules
-/npm-debug.log
+/out
 /.idea
 /.vscode
+/npm-debug.log
 /.env
 !/.env.*

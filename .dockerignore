@@ -1,9 +1,9 @@
 *
 !src/
 !types/
+!build.ts
 !index.ts
 !ormconfig.json
 !package.json
-!package.ts
 !package-lock.json
 !tsconfig.json
