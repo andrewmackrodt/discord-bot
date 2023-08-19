@@ -1,5 +1,6 @@
 import 'reflect-metadata'
 
+import { existsSync } from 'node:fs'
 import path from 'node:path'
 import dotenv from 'dotenv'
 import { glob } from 'glob'
@@ -14,11 +15,15 @@ function requirePlugins(): Plugin[] {
     const ext = isTs ? 'ts' : 'js'
     const pluginsPath = path.resolve(__dirname, 'src/plugins')
 
+    /* eslint-disable @typescript-eslint/no-var-requires */
     glob.sync(`${pluginsPath}/*/index.${ext}`).map(filepath => {
-        const pathname = filepath.replace(/\.[jt]s$/, '')
+        const augmentsFilepath = path.join(path.dirname(filepath), `augments.${ext}`)
 
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        let plugin = require(pathname).default
+        if (existsSync(augmentsFilepath)) {
+            require(augmentsFilepath)
+        }
+
+        let plugin = require(filepath).default
 
         if (typeof plugin.prototype?.constructor) {
             plugin = new plugin()
@@ -26,6 +31,7 @@ function requirePlugins(): Plugin[] {
 
         plugins.push(plugin)
     })
+    /* eslint-enable @typescript-eslint/no-var-requires */
 
     return plugins
 }

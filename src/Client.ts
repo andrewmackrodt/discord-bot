@@ -1,6 +1,5 @@
 import type { Message, MessageReaction, PartialUser, User } from 'discord.js'
 import Discord from 'discord.js'
-import type { Connection } from 'typeorm'
 import { dataSource } from './db'
 import { Schedule } from './Schedule'
 import type { Plugin } from '../types/plugins'
@@ -29,7 +28,6 @@ const forward = <T extends Plugin>(dispatch: (plugin: T) => any, stack: T[]) => 
 export class Client {
     protected readonly client = new Discord.Client()
     protected readonly schedule = new Schedule()
-    protected db?: Connection
 
     public constructor(
         protected readonly token: string,
@@ -43,8 +41,8 @@ export class Client {
         process.on('SIGTERM', this.cleanup)
 
         // create database connection and run migrations
-        this.db = await dataSource.connect()
-        await this.db.runMigrations()
+        await dataSource.initialize()
+        await dataSource.runMigrations()
 
         // assign handler functions
         this.client.on('error', this.onError)
@@ -68,9 +66,9 @@ export class Client {
         }
 
         // close db connection
-        if (this.db) {
+        if (dataSource.isInitialized) {
             try {
-                await this.db.close()
+                await dataSource.destroy()
             } catch (e) {
                 console.error(e)
             }
