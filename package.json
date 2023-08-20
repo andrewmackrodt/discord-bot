@@ -34,7 +34,6 @@
     "reflect-metadata": "^0.1.13",
     "spotify-web-api-node": "^5.0.2",
     "tslib": "^2.6.2",
-    "twitter-api-client": "^1.6.1",
     "typeorm": "^0.3.17"
   },
   "devDependencies": {
