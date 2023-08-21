@@ -5,4 +5,5 @@
 !index.ts
 !package.json
 !package-lock.json
+!tsconfig.build.json
 !tsconfig.json

@@ -1,8 +1,23 @@
-/config
-/node_modules
-/out
-/.idea
-/.vscode
-/npm-debug.log
-/.env
-!/.env.*
+# project settings
+config/
+.env
+!.env.*
+
+# build
+coverage/
+node_modules/
+out/
+npm-debug.log
+
+# idea
+.idea/*
+.idea/jsLinters/*
+!.idea/jsLinters/
+!.idea/jsLinters/eslint.xml
+!.idea/discord-bot.iml
+!.idea/jsLibraryMappings.xml
+!.idea/modules.xml
+!.idea/sqldialects.xml.xml
+
+# vscode
+.vscode/

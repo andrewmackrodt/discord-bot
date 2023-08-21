@@ -6,9 +6,9 @@ import { exec } from 'shelljs'
 const distPath = `${__dirname}/out`
 
 exec(['tsc',
+        '--project', 'tsconfig.build.json',
         '--sourcemap',
-        '--outDir',
-        `"${distPath}/"`,
+        '--outDir', `"${distPath}/"`,
     ].join(' '),
     {
         fatal: true,
