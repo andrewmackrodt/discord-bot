@@ -21,7 +21,7 @@ RUN npm run build:compile --silent
 # Target
 ################################################################################
 FROM node:18-alpine
-RUN apk add --no-cache font-noto graphicsmagick imagemagick tini
+RUN apk add --no-cache graphicsmagick imagemagick tini
 COPY --from=builder /opt/app/out/ /opt/app/
 WORKDIR /opt/app
 RUN mkdir -p /config \

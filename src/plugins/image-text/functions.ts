@@ -4,7 +4,7 @@ import { subClass } from 'gm'
 const gm = subClass({ imageMagick: true })
 const assetsPath = path.resolve(__dirname, 'assets')
 const fontsPath = path.resolve(assetsPath, 'fonts')
-const fontPath = path.resolve(fontsPath, 'NotoSans/NotoSans-Regular.ttf')
+const defaultFont = path.resolve(fontsPath, 'Impact/impact.ttf')
 const imagesPath = path.resolve(assetsPath, 'images')
 
 export class UnknownImageError extends Error {
@@ -18,27 +18,27 @@ export class TextCountError extends Error {
     }
 }
 
-interface Text {
-    x: number
-    y: number
-    w: number
-    h: number
-}
+type TextPosition = { w: number; h: number } & (
+    { x: number; y: number } |
+    { gravity: string } )
 
 interface Image {
     filename: string
     width: number
     height: number
-    fill: string
-    texts: Text[]
+    font?: string
+    color: string
+    stroke?: string
+    texts: TextPosition[]
 }
 
 export const images: Record<string, Image> = {
     batman: {
         filename: 'batman.png',
+        font: path.resolve(fontsPath, 'NotoSans/NotoSans-Regular.ttf'),
         width: 580,
         height: 564,
-        fill: '#000000',
+        color: '#000000',
         texts: [
             { x: 28, y: 9, w: 242, h: 94 },
             { x: 330, y: 10, w: 234, h: 98 },
@@ -48,17 +48,18 @@ export const images: Record<string, Image> = {
         filename: 'disaster-girl.png',
         width: 577,
         height: 433,
-        fill: '#ffffff',
+        color: '#ffffff',
+        stroke: '#000000',
         texts: [
-            { x: 16, y: 0, w: 548, h: 160 },
-            { x: 16, y: 276, w: 548, h: 160 },
+            { w: 548, h: 160, gravity: 'north' },
+            { w: 548, h: 160, gravity: 'south' },
         ],
     },
     drake: {
         filename: 'drake.jpg',
         width: 717,
         height: 717,
-        fill: '#000000',
+        color: '#000000',
         texts: [
             { x: 356, y: 9, w: 347, h: 340 },
             { x: 356, y: 380, w: 347, h: 340 },
@@ -68,13 +69,36 @@ export const images: Record<string, Image> = {
         filename: 'success-kid.jpg',
         width: 500,
         height: 500,
-        fill: '#ffffff',
+        color: '#ffffff',
+        stroke: '#000000',
         texts: [
-            { x: 6, y: -4, w: 480, h: 136 },
-            { x: 6, y: 360, w: 480, h: 136 },
+            { w: 480, h: 136, gravity: 'north' },
+            { w: 480, h: 136, gravity: 'south' },
         ],
     },
 }
+
+const getPointSize = (
+    dimensions: { w: number; h: number },
+    font: string,
+    stroke: boolean,
+    text: string,
+) => new Promise<number>((resolve, reject) => {
+    let state = gm(dimensions.w, dimensions.h)
+        .font(font)
+        .out(`caption:${text}`)
+        .out('-format', '%[caption:pointsize]')
+    if (stroke) {
+        state = state.strokeWidth(1)
+    }
+    state.write('info:', (err, stdout) => {
+        if (err) {
+            return reject(err)
+        } else {
+            resolve(Number(stdout))
+        }
+    })
+})
 
 export async function createImage(name: string, texts: string[]): Promise<Buffer> {
     if ( ! (name in images)) {
@@ -87,23 +111,42 @@ export async function createImage(name: string, texts: string[]): Promise<Buffer
         throw new TextCountError(image.texts.length)
     }
 
+    const pointSize = await Promise.all(
+        image.texts.map((dimensions, i) => getPointSize(
+            dimensions,
+            image.font ?? defaultFont,
+            typeof image.stroke === 'string',
+            texts[i],
+        )))
+        .then(arr => arr.sort((a, b) => a - b).at(0)!)
+
     const srcImagePath = path.resolve(imagesPath, image.filename)
 
     let state = gm(srcImagePath)
-        .font(fontPath)
         .background('none')
-        .fill(image.fill)
+        .fill(image.color)
+        .font(image.font ?? defaultFont)
+        .pointSize(pointSize)
         .gravity('Center')
 
-    for (let i = 0; i < texts.length; i++) {
-        let { x, y, w, h } = image.texts[i]
-        x = Math.floor((image.width - w) / 2) - x
-        y = Math.floor((image.height - h) / 2) - y
+    if (image.stroke) {
+        state = state.stroke(image.stroke).strokeWidth(1)
+    }
+
+    for (const i in texts) {
+        const position = image.texts[i]
         const text = texts[i]
-        state = state
-            .out('-size', `${w}x${h}`, `caption:${text}`)
-            .out('-geometry', `-${x}-${y}`)
-            .out('-composite')
+        const { w, h } = position
+        state = state.out('-size', `${w}x${h}`)
+        if ('gravity' in position) {
+            state = state.out('-gravity', position.gravity).out(`caption:${text}`)
+        } else {
+            let { x, y } = position
+            x = Math.floor((image.width - w) / 2) - x
+            y = Math.floor((image.height - h) / 2) - y
+            state = state.out(`caption:${text}`).out('-geometry', `-${x}-${y}`)
+        }
+        state = state.out('-composite')
     }
 
     return new Promise<Buffer>((resolve, reject) => {
