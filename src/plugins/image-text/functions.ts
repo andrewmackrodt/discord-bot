@@ -19,8 +19,8 @@ export class TextCountError extends Error {
 }
 
 type TextPosition = { w: number; h: number } & (
-    { x: number; y: number } |
-    { gravity: string } )
+    { x: number; y: number; gravity?: string } |
+    { gravity?: string } )
 
 interface Image {
     filename: string
@@ -127,7 +127,6 @@ export async function createImage(name: string, texts: string[]): Promise<Buffer
         .fill(image.color)
         .font(image.font ?? defaultFont)
         .pointSize(pointSize)
-        .gravity('Center')
 
     if (image.stroke) {
         state = state.stroke(image.stroke).strokeWidth(1)
@@ -135,18 +134,20 @@ export async function createImage(name: string, texts: string[]): Promise<Buffer
 
     for (const i in texts) {
         const position = image.texts[i]
-        const text = texts[i]
         const { w, h } = position
-        state = state.out('-size', `${w}x${h}`)
-        if ('gravity' in position) {
-            state = state.out('-gravity', position.gravity).out(`caption:${text}`)
-        } else {
-            let { x, y } = position
-            x = Math.floor((image.width - w) / 2) - x
-            y = Math.floor((image.height - h) / 2) - y
-            state = state.out(`caption:${text}`).out('-geometry', `-${x}-${y}`)
-        }
-        state = state.out('-composite')
+        state = state
+            .out('-gravity', position.gravity ?? 'center')
+            .out('-size', `${w}x${h}`)
+            .out(`caption:${texts[i]}`)
+            .out(...(() => {
+                if ( ! ('x' in position)) return []
+                const { x, y } = position
+                const xs = x >= 0 ? `+${x}` : `${x}`
+                const ys = y >= 0 ? `+${y}` : `${y}`
+                return ['-geometry', [xs, ys].join('')]
+            })())
+            .out('-gravity', position.gravity ?? 'northwest')
+            .out('-composite')
     }
 
     return new Promise<Buffer>((resolve, reject) => {
