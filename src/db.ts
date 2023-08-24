@@ -8,7 +8,7 @@ const ext = isTs ? 'ts' : 'js'
 
 export const dataSource = new DataSource({
     type: 'better-sqlite3',
-    database: `${appDir}/config/scratchmo.db`,
+    database: `${appDir}/config/bot.db`,
     synchronize: false,
     logging: false,
     entities: [
