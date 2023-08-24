@@ -21,11 +21,12 @@ RUN npm run build:compile --silent
 # Target
 ################################################################################
 FROM node:18-alpine
-RUN apk add --no-cache graphicsmagick imagemagick tini
+RUN apk add --no-cache imagemagick tini
 COPY --from=builder /opt/app/out/ /opt/app/
 WORKDIR /opt/app
 RUN mkdir -p /config \
  && ln -s /config /opt/app/config
 VOLUME /config
+USER node
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 ENTRYPOINT ["/sbin/tini", "--", "node", "index.js"]

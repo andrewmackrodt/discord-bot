@@ -1,0 +1,16 @@
+{
+    "name": "Node.js",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": { "NODE_VERSION": "18" }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "Orta.vscode-jest"
+            ]
+        }
+    },
+    "remoteUser": "node"
+}

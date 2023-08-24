@@ -20,4 +20,5 @@ npm-debug.log
 !.idea/sqldialects.xml.xml
 
 # vscode
-.vscode/
+.vscode/*
+!.vscode/launch.json
