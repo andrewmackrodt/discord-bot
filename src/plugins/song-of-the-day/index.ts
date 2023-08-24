@@ -1,6 +1,6 @@
-import { ChannelType, APIEmbedField } from 'discord.js'
-import type { Message, MessageEditOptions, MessageReaction, PartialMessageReaction, PartialUser, TextChannel , MessageCreateOptions } from 'discord.js'
+import type { Interaction, Message, MessageCreateOptions, MessageEditOptions, TextChannel } from 'discord.js'
 import type Discord from 'discord.js'
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction , ButtonStyle, ChannelType } from 'discord.js'
 import SpotifyWebApi from 'spotify-web-api-node'
 import type { Song } from './models/Song'
 import type { SongOfTheDaySettings } from './models/SongOfTheDaySettings'
@@ -9,7 +9,6 @@ import { SongOfTheDayRepository } from './repositories/SongOfTheDayRepository'
 import type { NextFunction, Plugin } from '../../../types/plugins'
 import type { User } from '../../models/User'
 import type { Schedule } from '../../Schedule'
-import { random } from '../../utils/array'
 import { isWorkingDay, ymd } from '../../utils/date'
 import { error, getCommandUsage, sendPluginHelpMessage, sendCommandHelpMessage, success } from '../../utils/plugin'
 import type { CommandUsage } from '../../utils/plugin'
@@ -54,6 +53,13 @@ interface SpotifyClient {
     settings: SongOfTheDaySettings
     sdk: SpotifyWebApi
     tokenExpiresAt: Date
+}
+
+enum Interactions {
+    HistoryNext = 'sotd.history.next',
+    HistoryPrev = 'sotd.history.prev',
+    NominationsNext = 'sotd.nominations.next',
+    NominationsPrev = 'sotd.nominations.prev',
 }
 
 /**
@@ -238,11 +244,23 @@ export default class SongOfTheDayPlugin implements Plugin {
             return message.channel.send('the song of the day data is empty, try adding a new song')
         }
 
-        const historyMessage = await message.channel.send(songHistoryEmbed)
-        await historyMessage.react('⏮')
-        await historyMessage.react('⏭')
+        songHistoryEmbed.components = [
+            // @ts-expect-error TS2322
+            new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(Interactions.HistoryPrev)
+                    .setLabel('Previous')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('⏮'),
+                new ButtonBuilder()
+                    .setCustomId(Interactions.HistoryNext)
+                    .setLabel('Next')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('⏭'),
+            ),
+        ]
 
-        return historyMessage
+        return message.channel.send(songHistoryEmbed)
     }
 
     protected async nominations(message: Message, params: string[] = []): Promise<Message> {
@@ -262,46 +280,59 @@ export default class SongOfTheDayPlugin implements Plugin {
             return message.channel.send('nominations history is empty')
         }
 
-        const reply = await message.channel.send(embed)
-        await reply.react('⏮')
-        await reply.react('⏭')
+        embed.components = [
+            // @ts-expect-error TS2322
+            new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(Interactions.NominationsPrev)
+                    .setLabel('Previous')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('⏮'),
+                new ButtonBuilder()
+                    .setCustomId(Interactions.NominationsNext)
+                    .setLabel('Next')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('⏭'),
+            ),
+        ]
 
-        return reply
+        return message.channel.send(embed)
     }
 
-    public async onMessageReactionAdd(
-        reaction: MessageReaction | PartialMessageReaction,
-        user: Discord.User | PartialUser,
-        next: NextFunction,
-    ) {
-        const message = reaction.message
-
-        if ( ! message.author || ! reaction.emoji.name) {
-            return
+    public async onInteraction(interaction: Interaction, next: NextFunction) {
+        if ( ! (interaction instanceof ButtonInteraction) ||
+             ! interaction.message.guild
+        ) {
+            return next()
         }
 
-        const embed = reaction.message.embeds[0]
-        const { title, description } = embed ?? {}
-        const pageStr = /page(?: |: ?)([0-9]+)/.exec(description ?? '')?.[1] ?? ''
-        let page = parseInt(pageStr, 10)
-        const userId = /userId(?: |: ?)([0-9]+)/.exec(description ?? '')?.[1]
+        const description = interaction.message.embeds[0].description as string
+        const pageStr = /page(?: |: ?)([0-9]+)/.exec(description)?.[1]
+        let page: number
 
-        let isHistoryReaction = false
-        let isNominationsReaction = false
+        if ( ! pageStr || isNaN((page = parseInt(pageStr, 10)))) {
+            return next()
+        }
+
+        const userId = /userId(?: |: ?)([0-9]+)/.exec(description)?.[1]
 
         if ( ! this.clientUserId ||
-            this.clientUserId !== message.author.id ||
-            ! ['⏮', '⏭'].includes(reaction.emoji.name) ||
-            ! (
-                (isHistoryReaction = Boolean(title?.match(/Song of the Day History/i))) ||
-                (isNominationsReaction = Boolean(title?.match(/Song of the Day Nominations History/i)))
-            ) ||
+            this.clientUserId !== interaction.message.author.id ||
+            ! ([
+                Interactions.HistoryNext,
+                Interactions.HistoryPrev,
+                Interactions.NominationsNext,
+                Interactions.NominationsPrev,
+            ] as string[])
+                .includes(interaction.customId) ||
             isNaN(page)
         ) {
             return next()
         }
 
-        if (reaction.emoji.name === '⏮') {
+        void this.suppressInteractionReply(interaction)
+
+        if (interaction.customId.includes('.prev')) {
             // ignore if trying to seek before first page
             if (page === 1) {
                 return
@@ -314,26 +345,30 @@ export default class SongOfTheDayPlugin implements Plugin {
         const options: SongHistoryOptions = { page, userId }
         let reply: Pick<MessageEditOptions, 'embeds'> | undefined
 
-        if (isHistoryReaction) {
-            reply = await this.getSongHistoryEmbed(message.guild!.id, options)
-        }
-        else if (isNominationsReaction) {
-            reply = await this.getNominationsHistoryEmbed(message.guild!.id, options)
-        }
-
-        if ( ! reply) {
-            return
+        switch (true) {
+            case interaction.customId.includes('.history.'):
+                reply = await this.getSongHistoryEmbed(interaction.message.guild.id, options)
+                break
+            case interaction.customId.includes('.nominations.'):
+                reply = await this.getNominationsHistoryEmbed(interaction.message.guild.id, options)
+                break
         }
 
-        return message.edit(reply)
+        if (reply) {
+            await interaction.message.edit(reply)
+        }
+
+        void this.suppressInteractionReply(interaction)
     }
 
-    public async onMessageReactionRemove(
-        reaction: MessageReaction | PartialMessageReaction,
-        user: Discord.User | PartialUser,
-        next: NextFunction,
-    ) {
-        return this.onMessageReactionAdd(reaction, user, next)
+    protected async suppressInteractionReply(interaction: ButtonInteraction) {
+        try {
+            await interaction.reply({ content: '', ephemeral: true })
+        } catch (err) {
+            // the discord api requires sending a non-empty reply to interactions
+            // rather than deferReplay then deleteReplay which would create a new
+            // message in the channel, we submit a bad request and hide the error
+        }
     }
 
     protected async random(message: Message): Promise<Message> {
