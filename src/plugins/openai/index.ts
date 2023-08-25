@@ -1,6 +1,7 @@
 import type { Message } from 'discord.js'
 import { OpenAI } from 'openai'
 import type { NextFunction, Plugin } from '../../../types/plugins'
+import { error } from '../../utils/plugin'
 
 export default class OpenAIPlugin implements Plugin {
     private _isSupported?: boolean
@@ -31,25 +32,31 @@ export default class OpenAIPlugin implements Plugin {
             return msg.reply('the openai plugin is not correctly configured, please contact the server admin')
         }
 
-        const content = msg.content.replace(/^!ask[ \t]*/, '')
-            .trim()
-            .replace(/[ ?]+$/, '') + '?'
+        const question = msg.content.replace(/^!ask[ \t]*/, '').trim()
 
-        if (content.length < 11) {
+        if (question.length < 11) {
             return msg.reply('usage: `!ask what is the meaning of life?`')
         }
 
-        const response = await this.openai.chat.completions.create({
-            model: 'gpt-4',
-            messages: [{ role: 'user', content }],
-            max_tokens: 1000,
-            frequency_penalty: 0.5,
-            presence_penalty: 0.0,
-            temperature: 0.5,
-        })
+        const reply = msg.reply(`:thinking: ${msg.client.user.username} is thinking ...`)
+        let text: string
 
-        const reply = response.choices.map(choice => choice.message.content?.trim()).join(' ')
+        try {
+            const res = await this.openai.chat.completions.create({
+                model: 'gpt-4',
+                messages: [{ role: 'user', content: question }],
+                max_tokens: 1000,
+                frequency_penalty: 0.5,
+                presence_penalty: 0.0,
+                temperature: 0.5,
+            })
 
-        return msg.reply(reply)
+            text = res.choices.map(choice => choice.message.content?.trim()).join(' ')
+        } catch (e) {
+            console.error('openai: error', e)
+            text = error('an error occurred please try again later')
+        }
+
+        return reply.then(reply => reply.edit(text))
     }
 }

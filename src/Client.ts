@@ -1,4 +1,4 @@
-import type { Message, MessageReaction, PartialUser, User , PartialMessageReaction , Interaction } from 'discord.js'
+import type { Message, MessageReaction, PartialUser, User , PartialMessageReaction , Interaction , AnyThreadChannel } from 'discord.js'
 import Discord, { GatewayIntentBits } from 'discord.js'
 import { dataSource } from './db'
 import { Schedule } from './Schedule'
@@ -9,9 +9,9 @@ type ErrorType = Error | string
 type PluginHasEvent<T extends keyof Plugin> = Plugin & Required<Pick<Plugin, T>>
 
 type MessagePlugin = PluginHasEvent<'onMessage'>
-type InteractionPlugin = PluginHasEvent<'onInteraction'>
 type MessageReactionAddPlugin = PluginHasEvent<'onMessageReactionAdd'>
 type MessageReactionRemovePlugin = PluginHasEvent<'onMessageReactionRemove'>
+type InteractionPlugin = PluginHasEvent<'onInteraction'>
 
 const forward = <T extends Plugin>(dispatch: (plugin: T) => any, stack: T[]) => {
     return async (err?: string | Error): Promise<any> => {
@@ -57,9 +57,9 @@ export class Client {
         this.client.on('error', this.onError)
         this.client.on('ready', this.onReady)
         this.client.on('messageCreate', this.onMessage)
-        this.client.on('interactionCreate', this.onInteraction)
         this.client.on('messageReactionAdd', this.onMessageReactionAdd)
         this.client.on('messageReactionRemove', this.onMessageReactionRemove)
+        this.client.on('interactionCreate', this.onInteraction)
 
         // connect to discord
         await this.client.login(this.token)
@@ -133,28 +133,6 @@ export class Client {
         }
     }
 
-    protected onInteraction = async (interaction: Interaction): Promise<void> => {
-        if (interaction.user.bot || ! interaction.guild) {
-            return
-        }
-
-        const stack = this.plugins.filter(p => p.onInteraction) as InteractionPlugin[]
-
-        if (stack.length === 0) {
-            return
-        }
-
-        const dispatch = async (plugin: InteractionPlugin): Promise<any> => {
-            return plugin.onInteraction(interaction, forward(dispatch, stack))
-        }
-
-        try {
-            await dispatch(stack.shift()!)
-        } catch (err) {
-            console.error(err)
-        }
-    }
-
     protected onMessageReactionAdd = async (
         reaction: MessageReaction | PartialMessageReaction,
         user: User | PartialUser,
@@ -196,6 +174,28 @@ export class Client {
 
         const dispatch = async (plugin: MessageReactionRemovePlugin): Promise<any> => {
             return plugin.onMessageReactionRemove(reaction, user, forward(dispatch, stack))
+        }
+
+        try {
+            await dispatch(stack.shift()!)
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    protected onInteraction = async (interaction: Interaction): Promise<void> => {
+        if (interaction.user.bot || ! interaction.guild) {
+            return
+        }
+
+        const stack = this.plugins.filter(p => p.onInteraction) as InteractionPlugin[]
+
+        if (stack.length === 0) {
+            return
+        }
+
+        const dispatch = async (plugin: InteractionPlugin): Promise<any> => {
+            return plugin.onInteraction(interaction, forward(dispatch, stack))
         }
 
         try {
