@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import dotenv from 'dotenv'
 import { glob } from 'glob'
+import { container } from 'tsyringe'
 import { Client } from './src/Client'
 import type { Plugin } from './types/plugins'
 
@@ -26,7 +27,7 @@ function requirePlugins(): Plugin[] {
         let plugin = require(filepath).default
 
         if (typeof plugin.prototype?.constructor) {
-            plugin = new plugin()
+            plugin = container.resolve(plugin)
         }
 
         plugins.push(plugin)

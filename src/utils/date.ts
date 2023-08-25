@@ -21,7 +21,7 @@ export const bankHolidays = [
     '2025-12-26', // Boxing Day
 ]
 
-export function ymd(date: Date | string = new Date()): string {
+export function getYmd(date: Date | string = new Date()): string {
     if (typeof date === 'string') {
         date = new Date(date)
     }
@@ -31,7 +31,7 @@ export function ymd(date: Date | string = new Date()): string {
 
 export function isWorkingDay(date: Date = new Date()): boolean {
     return date.getDay() !== 0 && date.getDay() !== 6 &&
-        ! bankHolidays.includes(ymd(date))
+        ! bankHolidays.includes(getYmd(date))
 }
 
 export function getNextWorkingDays(from: Date | string, count: number): string[] {
@@ -41,7 +41,7 @@ export function getNextWorkingDays(from: Date | string, count: number): string[]
         throw new Error()
     }
 
-    const fromDateYmd = ymd(fromDate)
+    const fromDateYmd = getYmd(fromDate)
     const workingDays: string[] = []
 
     for (
@@ -50,7 +50,7 @@ export function getNextWorkingDays(from: Date | string, count: number): string[]
         day.setDate(day.getDate() + 1)
     ) {
         if (isWorkingDay(day)) {
-            workingDays.push(ymd(day))
+            workingDays.push(getYmd(day))
         }
     }
 
@@ -65,8 +65,8 @@ export function getWorkingDaysBetween(from: Date | string, to: Date | string): s
         throw new Error()
     }
 
-    const fromDateYmd = ymd(fromDate)
-    const toDateYmd = ymd(toDate)
+    const fromDateYmd = getYmd(fromDate)
+    const toDateYmd = getYmd(toDate)
     const workingDays: string[] = []
 
     for (
@@ -75,7 +75,7 @@ export function getWorkingDaysBetween(from: Date | string, to: Date | string): s
         day.setDate(day.getDate() + 1)
     ) {
         if (isWorkingDay(day)) {
-            workingDays.push(ymd(day))
+            workingDays.push(getYmd(day))
         }
     }
 

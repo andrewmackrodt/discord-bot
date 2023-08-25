@@ -1,15 +1,16 @@
 import type { Interaction, Message, MessageCreateOptions, MessageEditOptions, TextChannel } from 'discord.js'
 import type Discord from 'discord.js'
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction , ButtonStyle, ChannelType } from 'discord.js'
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js'
 import SpotifyWebApi from 'spotify-web-api-node'
+import { injectable } from 'tsyringe'
 import type { Song } from './models/Song'
 import type { SongOfTheDaySettings } from './models/SongOfTheDaySettings'
-import { NotificationEventType } from './models/SongOfTheDaySettings'
 import { SongOfTheDayRepository } from './repositories/SongOfTheDayRepository'
+import { SongOfTheDayNotificationService } from './services/SongOfTheDayNotificationService'
 import type { NextFunction, Plugin } from '../../../types/plugins'
 import type { User } from '../../models/User'
 import type { Schedule } from '../../Schedule'
-import { isWorkingDay, ymd } from '../../utils/date'
+import { isWorkingDay } from '../../utils/date'
 import { error, getCommandUsage, sendPluginHelpMessage, sendCommandHelpMessage, success } from '../../utils/plugin'
 import type { CommandUsage } from '../../utils/plugin'
 import { toMarkdownTable } from '../../utils/string'
@@ -72,15 +73,17 @@ enum Interactions {
  *   &redirect_uri=http:%2F%2Flocalhost:8080
  *   &scope=playlist-read-collaborative%20playlist-modify-public%20playlist-modify-private
  */
+@injectable()
 export default class SongOfTheDayPlugin implements Plugin {
     public static readonly HISTORY_LIMIT = 5
-    public static readonly NOTIFICATION_PICK_HOUR = 10
-    public static readonly NOTIFICATION_OPEN_HOUR = 16
-    public static readonly NOTIFICATION_STOP_HOUR = 18
-
-    private readonly repository = new SongOfTheDayRepository()
     private clientUserId?: string
     private spotifyClients: Record<string, SpotifyClient> = {}
+
+    public constructor(
+        private readonly repository: SongOfTheDayRepository,
+        private readonly notificationService: SongOfTheDayNotificationService,
+    ) {
+    }
 
     public async onConnect(client: Discord.Client): Promise<void> {
         this.clientUserId = client.user?.id
@@ -92,15 +95,15 @@ export default class SongOfTheDayPlugin implements Plugin {
 
             // only run tasks on working days between 10am and 6pm
             if ( ! isWorkingDay(now) ||
-                now.getHours() < SongOfTheDayPlugin.NOTIFICATION_PICK_HOUR ||
-                now.getHours() > SongOfTheDayPlugin.NOTIFICATION_STOP_HOUR
+                now.getHours() < SongOfTheDayNotificationService.NOTIFICATION_PICK_HOUR ||
+                now.getHours() > SongOfTheDayNotificationService.NOTIFICATION_STOP_HOUR
             ) {
                 return
             }
 
             for (const guild of client.guilds.cache.values()) {
                 try {
-                    await this.minutely(guild, now)
+                    await this.notificationService.sendNotifications(guild, now)
                 } catch (e) {
                     console.error(e)
                 }
@@ -393,72 +396,6 @@ export default class SongOfTheDayPlugin implements Plugin {
         }
 
         return message.channel.send('```\n' + markdown + '\n```')
-    }
-
-    protected async minutely(guild: Discord.Guild, now = new Date()): Promise<void> {
-        const settings = await this.repository.getServerSettings(guild.id)
-
-        if ( ! settings?.notificationsChannelId) {
-            return
-        }
-
-        const nowYmd = ymd(now)
-        const isSongOfTheDay = await this.repository.serverContainsSongOfTheDayOnDate(guild.id, nowYmd)
-
-        if (isSongOfTheDay) {
-            return
-        }
-
-        const _channel = guild.channels.cache.get(settings.notificationsChannelId)
-
-        if ( ! _channel || _channel.type !== ChannelType.GuildText) {
-            console.error(`songOfTheDay: server ${guild.id} has bad notifications channel configuration`)
-        }
-
-        const channel = _channel as TextChannel
-
-        const isEventTypeProcessable = (eventType: NotificationEventType): boolean => {
-            return settings.notificationsLastEventType !== eventType ||
-                (
-                    ! settings.notificationsLastEventTime ||
-                    ymd(settings.notificationsLastEventTime) !== nowYmd
-                )
-        }
-
-        const nowHour = now.getHours()
-
-        // pick a random user who has previously contributed to song of the day
-        // on this server and sent them a notification that it is their turn
-        if (SongOfTheDayPlugin.NOTIFICATION_PICK_HOUR <= nowHour && nowHour < SongOfTheDayPlugin.NOTIFICATION_OPEN_HOUR) {
-            if (isEventTypeProcessable(NotificationEventType.PICK)) {
-                const user = await this.repository.getRandomServerUserWithPastSongOfTheDay(guild.id)
-
-                if ( ! user) {
-                    return
-                }
-
-                await channel.send(`**<@${user.id}> you have been chosen to select the song of the day** :musical_note:`)
-                await this.repository.addNomination(guild.id, user.id, now)
-                await this.repository.updateSettingsNotificationEvent(
-                    settings,
-                    NotificationEventType.PICK,
-                    now,
-                )
-            }
-        }
-        // send a message to the channel that there has been no song of the day
-        // and it is open to anyone on the server to add one
-        else if (SongOfTheDayPlugin.NOTIFICATION_OPEN_HOUR <= nowHour && nowHour < SongOfTheDayPlugin.NOTIFICATION_STOP_HOUR) {
-            if (isEventTypeProcessable(NotificationEventType.OPEN)) {
-                await channel.send('**Song of the day is open to the floor** :musical_note:')
-
-                await this.repository.updateSettingsNotificationEvent(
-                    settings,
-                    NotificationEventType.OPEN,
-                    now,
-                )
-            }
-        }
     }
 
     protected async addSongOfTheDay(spotify: SpotifyWebApi, serverId: string, trackId: string, user: User): Promise<Song> {

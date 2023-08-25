@@ -6,6 +6,7 @@ extends:
   - plugin:@typescript-eslint/recommended
 parserOptions:
   ecmaVersion: 2018
+  emitDecoratorMetadata: true
 plugins:
   - import
   - '@typescript-eslint'

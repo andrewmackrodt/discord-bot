@@ -1,6 +1,6 @@
-import type { JestConfigWithTsJest } from 'ts-jest'
+import type { Config } from '@jest/types'
 
-const jestConfig: JestConfigWithTsJest = {
+const jestConfig: Config.InitialOptions = {
     collectCoverageFrom: [
         'src/**/*.ts',
     ],
@@ -9,12 +9,22 @@ const jestConfig: JestConfigWithTsJest = {
     roots: [
         '<rootDir>/src',
     ],
-    setupFiles: [
+    setupFilesAfterEnv: [
         './jest.setup.ts',
     ],
     testEnvironment: 'node',
     transform: {
-        '.+\.tsx?$': ['ts-jest', {}],
+        '^.+\\.(t|j)sx?$': ['@swc/jest', {
+            jsc: {
+                parser: {
+                    decorators: true,
+                    syntax: 'typescript',
+                },
+                transform: {
+                    decoratorMetadata: true,
+                },
+            },
+        }],
     },
 }
 

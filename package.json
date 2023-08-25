@@ -37,6 +37,7 @@
     "reflect-metadata": "^0.1.13",
     "spotify-web-api-node": "^5.0.2",
     "tslib": "^2.6.2",
+    "tsyringe": "^4.8.0",
     "typeorm": "^0.3.17",
     "utf-8-validate": "^6.0.3",
     "zlib-sync": "^0.1.8"
@@ -68,7 +69,7 @@
     "npm-run-all": "^4.1.5",
     "shelljs": "^0.8.5",
     "shx": "^0.3.4",
-    "ts-jest": "^29.1.1",
+    "strong-mock": "^8.0.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.1.6"
   }

@@ -1,5 +1,6 @@
 import { User } from '../../../models/User'
-import { ymd } from '../../../utils/date'
+import { getYmd } from '../../../utils/date'
+import { component } from '../../../utils/di'
 import { Song } from '../models/Song'
 import { SongOfTheDayNomination } from '../models/SongOfTheDayNomination'
 import type { NotificationEventType } from '../models/SongOfTheDaySettings'
@@ -32,6 +33,7 @@ interface ServerStatsRow {
     count: number
 }
 
+@component()
 export class SongOfTheDayRepository {
     public async addSongOfTheDay(
         serverId: string,
@@ -43,7 +45,7 @@ export class SongOfTheDayRepository {
         song.trackId = track.id
         song.artist = track.artists[0].name
         song.title = track.name
-        song.date = ymd()
+        song.date = getYmd()
         song.userId = user.id
         song.user = user
 
@@ -154,7 +156,7 @@ export class SongOfTheDayRepository {
         const nomination = new SongOfTheDayNomination()
         nomination.serverId = serverId
         nomination.userId = userId
-        nomination.date = ymd(date)
+        nomination.date = getYmd(date)
 
         return await nomination.save()
     }
