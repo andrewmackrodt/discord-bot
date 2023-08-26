@@ -29,4 +29,4 @@ RUN mkdir -p /config \
 VOLUME /config
 USER node
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
-ENTRYPOINT ["/sbin/tini", "--", "node", "index.js"]
+ENTRYPOINT ["/sbin/tini", "--", "node", "--no-warnings", "index.js"]

@@ -31,7 +31,7 @@ export class CreateNominationsTable1649116800000 implements MigrationInterface {
         await queryRunner.createIndices('sotd_nominations', [
             new TableIndex({
                 name: 'sotd_nominations_server_id_index',
-                columnNames: ['server_id'] ,
+                columnNames: ['server_id'],
             }),
         ])
 

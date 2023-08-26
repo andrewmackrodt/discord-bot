@@ -48,7 +48,7 @@ export class CreateSongsTable1643414401000 implements MigrationInterface {
             }),
             new TableIndex({
                 name: 'songs_user_id_index',
-                columnNames: ['user_id'] ,
+                columnNames: ['user_id'],
             }),
         ])
 
