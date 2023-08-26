@@ -1,9 +1,10 @@
 {
     "name": "Node.js",
-    "build": {
-        "dockerfile": "Dockerfile",
-        "args": { "NODE_VERSION": "18" }
+    "image": "node:18-bookworm",
+    "features": {
+        "ghcr.io/devcontainers/features/sshd": "latest"
     },
+    "postCreateCommand": "npm install",
     "customizations": {
         "vscode": {
             "extensions": [
