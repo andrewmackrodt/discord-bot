@@ -1,4 +1,5 @@
 import type { Message } from 'discord.js'
+import { AttachmentBuilder } from 'discord.js'
 import { createImage, images, UnknownImageError, TextCountError } from './functions'
 import type { Plugin, NextFunction } from '../../../types/plugins'
 
@@ -16,8 +17,10 @@ export default class ImageTextPlugin implements Plugin {
         const texts = msg.content.replace(/^![a-z]+[ \t]+/, '').split(';').map(t => t.trim()).filter(t => t.length > 0)
 
         try {
-            const buffer = await createImage(name, texts)
-            await msg.channel.send({ files: [buffer] })
+            const image = await createImage(name, texts)
+            const ext = image.name.split('.').pop()
+            const attachment = new AttachmentBuilder(image.data, { name: `file.${ext}` })
+            await msg.channel.send({ files: [attachment] })
         } catch (e) {
             let content = ''
             if (e instanceof UnknownImageError) {

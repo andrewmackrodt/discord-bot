@@ -32,14 +32,15 @@ describe('createImage', () => {
         ['batman', ['There are too many Batman comics.', "There's no such thing as too many Batman comics!"]],
         ['dg', ['JUST SAW A GIANT SPIDER', "I'M OK NOW"]],
         ['drake', ['LETTUCE & TOMATO SANDWICH', 'BACON, LETTUCE & TOMATO SANDWICH']],
+        ['morty', ["You son of a *****... I'm in"]],
         ['success', ['NOT STARTED ASSIGNMENT DUE TODAY', "TEACHER'S STRIKE"]],
     ]
 
     imageTests.forEach(([name, texts], i) => {
         it(`creates image [${i}]: ${name}`, async () => {
             expect.assertions(1)
-            const buffer = await createImage(name, texts)
-            expect(buffer.length).toBeGreaterThan(1000)
+            const { data } = await createImage(name, texts)
+            expect(data.length).toBeGreaterThan(1000)
         })
     })
 })

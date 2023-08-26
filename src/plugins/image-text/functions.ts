@@ -32,6 +32,12 @@ interface Image {
     texts: TextPosition[]
 }
 
+interface CreateImageResult {
+    data: Buffer
+    contentType: string
+    name: string
+}
+
 export const images: Record<string, Image> = {
     batman: {
         filename: 'batman.png',
@@ -63,6 +69,16 @@ export const images: Record<string, Image> = {
         texts: [
             { x: 356, y: 9, w: 347, h: 340 },
             { x: 356, y: 380, w: 347, h: 340 },
+        ],
+    },
+    morty: {
+        filename: 'morty.gif',
+        width: 640,
+        height: 360,
+        color: '#ffffff',
+        stroke: '#000000',
+        texts: [
+            { w: 600, h: 56, gravity: 'south' },
         ],
     },
     success: {
@@ -100,7 +116,7 @@ const getPointSize = (
     })
 })
 
-export async function createImage(name: string, texts: string[]): Promise<Buffer> {
+export async function createImage(name: string, texts: string[]): Promise<CreateImageResult> {
     if ( ! (name in images)) {
         throw new UnknownImageError()
     }
@@ -124,6 +140,7 @@ export async function createImage(name: string, texts: string[]): Promise<Buffer
 
     let state = gm(srcImagePath)
         .background('none')
+        .coalesce()
         .fill(image.color)
         .font(image.font ?? defaultFont)
         .pointSize(pointSize)
@@ -132,13 +149,26 @@ export async function createImage(name: string, texts: string[]): Promise<Buffer
         state = state.stroke(image.stroke).strokeWidth(1)
     }
 
-    for (const i in texts) {
+    let format: string
+
+    if (image.filename.toLowerCase().endsWith('.gif')) {
+        format = 'gif'
+    } else {
+        format = 'jpeg'
+    }
+
+    for (let i = 0; i < texts.length; i++) {
         const position = image.texts[i]
-        const { w, h } = position
+        const { w, h, x, y } = { ...{ x: 0, y: 0 }, ...position }
+        if (format === 'gif') {
+            state = state.drawText(x, y, texts[i], position.gravity)
+        } else {
+            state = state
+                .out('-gravity', position.gravity ?? 'center')
+                .out('-size', `${w}x${h}`)
+                .out(`caption:${texts[i]}`)
+        }
         state = state
-            .out('-gravity', position.gravity ?? 'center')
-            .out('-size', `${w}x${h}`)
-            .out(`caption:${texts[i]}`)
             .out(...(() => {
                 if ( ! ('x' in position)) return []
                 const { x, y } = position
@@ -147,15 +177,27 @@ export async function createImage(name: string, texts: string[]): Promise<Buffer
                 return ['-geometry', [xs, ys].join('')]
             })())
             .out('-gravity', position.gravity ?? 'northwest')
-            .out('-composite')
+        if (format === 'gif') {
+            state = state.out('-compose', 'over').out('-layers', 'composite')
+        } else {
+            state = state.out('-composite')
+        }
     }
 
-    return new Promise<Buffer>((resolve, reject) => {
-        state.toBuffer('jpeg', (err, buffer) => {
+    if (format === 'gif') {
+        state = state.out('-layers', 'optimize')
+    }
+
+    return new Promise<CreateImageResult>((resolve, reject) => {
+        state.toBuffer(format, (err, buffer) => {
             if (err) {
                 reject(err)
             } else {
-                resolve(buffer)
+                resolve({
+                    data: buffer,
+                    contentType: `image/${format}`,
+                    name: `${name}.${format}`,
+                })
             }
         })
     })
