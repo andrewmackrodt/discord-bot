@@ -1,34 +1,32 @@
-import type { Message, MessageReaction, PartialUser, User , PartialMessageReaction , Interaction , AnyThreadChannel } from 'discord.js'
+import type { Message, MessageReaction, PartialUser, User, PartialMessageReaction, Interaction } from 'discord.js'
 import Discord, { GatewayIntentBits } from 'discord.js'
 import { dataSource } from './db'
 import { Schedule } from './Schedule'
-import type { Plugin } from '../types/plugins'
+import { NextFunction, Plugin } from '../types/plugins'
+
+type PluginEvent = 'onMessage' | 'onMessageReactionAdd' | 'onMessageReactionRemove' | 'onInteraction'
+
+type PluginHasEvent<T extends PluginEvent> = Required<Pick<Plugin, T>>
+
+type FilterNextFunction<T extends unknown[]> = T extends [...infer H, infer R]
+    ? R extends NextFunction ? [...H] : [T]
+    : [T]
+
+type PluginEventParameters<T extends PluginEvent>
+    = FilterNextFunction<Parameters<Exclude<PluginHasEvent<T>[T], undefined>>>
 
 type ErrorType = Error | string
-
-type PluginHasEvent<T extends keyof Plugin> = Plugin & Required<Pick<Plugin, T>>
-
-type MessagePlugin = PluginHasEvent<'onMessage'>
-type MessageReactionAddPlugin = PluginHasEvent<'onMessageReactionAdd'>
-type MessageReactionRemovePlugin = PluginHasEvent<'onMessageReactionRemove'>
-type InteractionPlugin = PluginHasEvent<'onInteraction'>
-
-const forward = <T extends Plugin>(dispatch: (plugin: T) => any, stack: T[]) => {
-    return async (err?: string | Error): Promise<any> => {
-        if ( ! err) {
-            const sibling = stack.shift()
-            if (sibling) {
-                return dispatch(sibling)
-            }
-        } else {
-            console.error(err)
-        }
-    }
-}
 
 export class Client {
     protected readonly client: Discord.Client
     protected readonly schedule = new Schedule()
+
+    protected readonly eventHandlers: Record<PluginEvent, Plugin[]> = {
+        onMessage: [],
+        onMessageReactionAdd: [],
+        onMessageReactionRemove: [],
+        onInteraction: [],
+    }
 
     public constructor(
         protected readonly token: string,
@@ -42,6 +40,19 @@ export class Client {
                 GatewayIntentBits.MessageContent,
             ],
         })
+
+        const events: PluginEvent[] = [
+            'onMessage',
+            'onMessageReactionAdd',
+            'onMessageReactionRemove',
+            'onInteraction',
+        ]
+        for (const plugin of plugins)
+        for (const e of events) {
+            if (plugin[e]) {
+                this.eventHandlers[e].push(plugin)
+            }
+        }
     }
 
     public async start(): Promise<void> {
@@ -56,11 +67,10 @@ export class Client {
         // assign handler functions
         this.client.on('error', this.onError)
         this.client.on('ready', this.onReady)
-        this.client.on('messageCreate', this.onMessage)
-        this.client.on('messageReactionAdd', this.onMessageReactionAdd)
-        this.client.on('messageReactionRemove', this.onMessageReactionRemove)
-        this.client.on('interactionCreate', this.onInteraction)
-
+        if (this.eventHandlers['onMessage']) this.client.on('messageCreate', this.onMessage)
+        if (this.eventHandlers['onMessageReactionAdd']) this.client.on('messageReactionAdd', this.onMessageReactionAdd)
+        if (this.eventHandlers['onMessageReactionRemove']) this.client.on('messageReactionRemove', this.onMessageReactionRemove)
+        if (this.eventHandlers['onInteraction']) this.client.on('interactionCreate', this.onInteraction)
         // connect to discord
         await this.client.login(this.token)
     }
@@ -70,7 +80,7 @@ export class Client {
 
         // close discord connection
         try {
-            this.client.destroy()
+            await this.client.destroy()
         } catch (e) {
             console.error(e)
         }
@@ -111,26 +121,32 @@ export class Client {
         }
     }
 
+    protected dispatch = async <T extends PluginEvent>(
+        event: T,
+        args: PluginEventParameters<T>,
+    ): Promise<void> => {
+        for (const plugin of this.eventHandlers[event]) {
+            let isNext = false
+            // @ts-expect-error TS2556
+            await plugin[event]!(...args, err => {
+                if ( ! err) {
+                    isNext = true
+                } else {
+                    console.error(err)
+                }
+            })
+            if ( ! isNext) {
+                break
+            }
+        }
+    }
+
     protected onMessage = async (message: Message): Promise<void> => {
         if (message.author.bot || ! message.guild) {
             return
         }
 
-        const stack = this.plugins.filter(p => p.onMessage) as MessagePlugin[]
-
-        if (stack.length === 0) {
-            return
-        }
-
-        const dispatch = async (plugin: MessagePlugin): Promise<any> => {
-            return plugin.onMessage(message, forward(dispatch, stack))
-        }
-
-        try {
-            await dispatch(stack.shift()!)
-        } catch (err) {
-            console.error(err)
-        }
+        return this.dispatch('onMessage', [message])
     }
 
     protected onMessageReactionAdd = async (
@@ -141,21 +157,7 @@ export class Client {
             return
         }
 
-        const stack = this.plugins.filter(x => x.onMessageReactionAdd) as MessageReactionAddPlugin[]
-
-        if (stack.length === 0) {
-            return
-        }
-
-        const dispatch = async (plugin: MessageReactionAddPlugin): Promise<any> => {
-            return plugin.onMessageReactionAdd(reaction, user, forward(dispatch, stack))
-        }
-
-        try {
-            await dispatch(stack.shift()!)
-        } catch (err) {
-            console.error(err)
-        }
+        return this.dispatch('onMessageReactionAdd', [reaction, user])
     }
 
     protected onMessageReactionRemove = async (
@@ -166,21 +168,7 @@ export class Client {
             return
         }
 
-        const stack = this.plugins.filter(x => x.onMessageReactionRemove) as MessageReactionRemovePlugin[]
-
-        if (stack.length === 0) {
-            return
-        }
-
-        const dispatch = async (plugin: MessageReactionRemovePlugin): Promise<any> => {
-            return plugin.onMessageReactionRemove(reaction, user, forward(dispatch, stack))
-        }
-
-        try {
-            await dispatch(stack.shift()!)
-        } catch (err) {
-            console.error(err)
-        }
+        return this.dispatch('onMessageReactionRemove', [reaction, user])
     }
 
     protected onInteraction = async (interaction: Interaction): Promise<void> => {
@@ -188,20 +176,6 @@ export class Client {
             return
         }
 
-        const stack = this.plugins.filter(p => p.onInteraction) as InteractionPlugin[]
-
-        if (stack.length === 0) {
-            return
-        }
-
-        const dispatch = async (plugin: InteractionPlugin): Promise<any> => {
-            return plugin.onInteraction(interaction, forward(dispatch, stack))
-        }
-
-        try {
-            await dispatch(stack.shift()!)
-        } catch (err) {
-            console.error(err)
-        }
+        return this.dispatch('onInteraction', [interaction])
     }
 }

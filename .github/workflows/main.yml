@@ -3,35 +3,26 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - '**'
   pull_request:
+    branches:
+      - '**'
 
 env:
   PRIMARY_NODE_VERSION: 18
 
 jobs:
-  lint:
-    name: Code Style
+  eslint:
+    name: eslint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Use Node.js v${{ env.PRIMARY_NODE_VERSION }}
+      - name: Setup Node.js v${{ env.PRIMARY_NODE_VERSION }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
-
-      - name: Get npm cache directory path
-        id: npm-cache-dir-path
-        run: echo "::set-output name=dir::$(npm config get cache || echo "$HOME/.npm")"
-
-      - uses: actions/cache@v3
-        id: npm-cache
-        with:
-          path: ${{ steps.npm-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -40,14 +31,32 @@ jobs:
         with:
           reviewdog_version: latest
 
-      - name: Run ESLint pull request
+      - if: ${{ github.event_name == 'pull_request' }}
+        name: Run ESLint review
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run lint:review
-        if: ${{ github.event_name == 'pull_request' }}
 
-      - name: Run ESLint push
+      - if: ${{ github.event_name == 'push' }}
+        name: Run ESLint check
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run lint:check
-        if: ${{ github.event_name == 'push' }}
+
+  jest:
+    name: jest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js v${{ env.PRIMARY_NODE_VERSION }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run jest
+        run: npm test
