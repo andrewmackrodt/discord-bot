@@ -1,93 +1,83 @@
 import type { Message } from 'discord.js'
-import type Discord from 'discord.js'
-import { padRight } from './string'
-
-export interface CommandUsage {
-    command: string[]
-    title: string
-    usage: string
-    params?: Record<string, string>
-}
-
-export function getCommandUsage(commandsUsage: CommandUsage[], ...params: string[]): CommandUsage {
-    const paramsStr = params.join(' ')
-
-    const usage = commandsUsage.find(help => (
-        help.command.length === params.length && help.command.join(' ') === paramsStr
-    ))
-
-    if ( ! usage) {
-        throw new Error(`unknown command: ${params.join(' ')}`)
-    }
-
-    return usage
-}
-
-function formatCommandUsage(usage: CommandUsage): string {
-    const text: string[] = []
-    text.push(`**${usage.title}**:`)
-    text.push('```')
-    text.push(usage.usage)
-
-    if (usage.params) {
-        const params: string[] = []
-        for (const [param, description] of Object.entries(usage.params)) {
-            params.push(' ' + padRight(param, 10) + description)
-        }
-        if (params.length > 0) {
-            text.push('')
-            text.push('params:')
-            text.push(...params)
-        }
-    }
-
-    text.push('```')
-
-    return '> ' + text.join('\n> ')
-}
-
-export async function sendCommandHelpMessage(
-    message: Message,
-    usage: CommandUsage,
-    isSyntaxError = false,
-): Promise<Message> {
-    let response = formatCommandUsage(usage)
-
-    if (isSyntaxError) {
-        response = error('the command contains a syntax error') + `\n\n${response}`
-    }
-
-    return message.channel.send(response)
-}
-
-export async function sendPluginHelpMessage(
-    title: string,
-    commandsUsage: CommandUsage[],
-    message: Discord.Message,
-    params: string[] = [],
-): Promise<Discord.Message> {
-    const helpText = `${title}\n\n` + Object.values(commandsUsage).map(formatCommandUsage).join('\n')
-    let replyPrefix = ''
-
-    if (params.length > 0) {
-        const paramsStr = params.join(' ')
-
-        for (const usage of commandsUsage) {
-            if (params.length === usage.command.length && paramsStr === usage.command.join(' ')) {
-                return sendCommandHelpMessage(message, usage)
-            }
-        }
-
-        replyPrefix = error('unknown command') + '\n\n'
-    }
-
-    return message.channel.send(replyPrefix + helpText)
-}
+import type { Command } from '../registries/Command'
 
 export function error(text: string): string {
-    return `:no_entry: ${text}`
+    return `_error: ${text}_`
 }
 
 export function success(text: string): string {
-    return `:white_check_mark: ${text}`
+    return `:white_check_mark:  ${text}`
+}
+
+export async function replyWithCommandHelp(message: Message, command: Command, err?: string): Promise<Message> {
+    const content = formatCommandUsage(command, err)
+
+    return message.reply(content)
+}
+
+function formatCommandUsage(command: Command, err?: string): string {
+    const buffer: string[] = []
+
+    if (err) {
+        buffer.push(error(err) + '\n')
+    }
+
+    // add title
+    let title = findFirst(command, 'title')
+    title = title ? `**${title} Help**` : `**"${command.fullCommand}" help**`
+    const emoji = findFirst(command, 'emoji')
+    if (emoji) title = [emoji, title].join('  ')
+    buffer.push(`${title}`)
+
+    // add command help
+    buffer.push('```')
+    if (Object.keys(command.subcommands).length > 0) {
+        // add usage instructions for all subcommands
+        for (const subcommand of Object.values(command.subcommands)) {
+            addCommandUsageToBuffer(subcommand, buffer)
+        }
+    } else {
+        // add usage instructions for command arguments
+        addCommandUsageToBuffer(command, buffer)
+    }
+    buffer.push('```')
+
+    return buffer.join('\n')
+}
+
+function addCommandUsageToBuffer(command: Command, buffer: string[]) {
+    const description = command.description || `".${command.fullCommand}" usage example`
+    buffer.push(`# ${description}`)
+    const lineBuffer: string[] = []
+    lineBuffer.push(`.${command.fullCommand}`)
+    const argBuffer: string[] = []
+    for (const [arg, options] of Object.entries(command.args)) {
+        let str: string
+        if (options.example) {
+            str = options.example
+        } else {
+            str = arg
+            if ( ! options.required) str += '?'
+            str = `<${str}>`
+        }
+        argBuffer.push(str)
+    }
+    const separator = typeof command.separator === 'string'
+        ? command.separator  + ' '
+        : ' '
+    lineBuffer.push(argBuffer.join(separator))
+    buffer.push(lineBuffer.join(' '))
+    buffer.push('')
+}
+
+function findFirst<K extends keyof Command>(command: Command, key: K): Command[K] | undefined {
+    for (
+        let c: Command | undefined = command;
+        typeof c !== 'undefined';
+        c = c.parent
+    ) {
+        if (typeof c[key] !== 'undefined') {
+            return c[key]
+        }
+    }
 }

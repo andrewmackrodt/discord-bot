@@ -1,26 +1,19 @@
 import type { Message } from 'discord.js'
 import { AttachmentBuilder } from 'discord.js'
+import type { Image } from './functions'
 import { createImage, images, UnknownImageError, TextCountError } from './functions'
-import type { Plugin, NextFunction } from '../../../types/plugins'
-
-const regExp = new RegExp('^!(' + Object.keys(images).join('|') + ')')
+import type { Plugin } from '../../../types/plugins'
+import type { CommandArgumentOptions } from '../../registries/Command'
+import { Command } from '../../registries/Command'
+import type { CommandRegistry } from '../../registries/CommandRegistry'
 
 export default class ImageTextPlugin implements Plugin {
-    public async onMessage(msg: Message, next: NextFunction): Promise<any> {
-        const match = regExp.exec(msg.content)
-
-        if ( ! match) {
-            return next()
-        }
-
-        const name = match[1]
-        const texts = msg.content.replace(/^![a-z]+[ \t]+/, '').split(';').map(t => t.trim()).filter(t => t.length > 0)
-
+    public async replyWithImage(message: Message, name: string, args: string[]): Promise<any> {
         try {
-            const image = await createImage(name, texts)
+            const image = await createImage(name, args)
             const ext = image.name.split('.').pop()
             const attachment = new AttachmentBuilder(image.data, { name: `file.${ext}` })
-            await msg.channel.send({ files: [attachment] })
+            await message.channel.send({ files: [attachment] })
         } catch (e) {
             let content = ''
             if (e instanceof UnknownImageError) {
@@ -35,7 +28,31 @@ export default class ImageTextPlugin implements Plugin {
                 console.error('image-text: error', e)
                 content = 'an unknown error occurred'
             }
-            return msg.reply(content)
+            return message.reply(content)
         }
+    }
+
+    public doCommandRegistration(registry: CommandRegistry) {
+        for (const k in images) {
+            this.registerImageCommand(registry, k, images[k])
+        }
+    }
+
+    private registerImageCommand(registry: CommandRegistry, name: string, image: Image) {
+        const command = Command.builder()
+            .command(name)
+            .separator(';')
+            .args(function () {
+                const args: Record<string, CommandArgumentOptions> = {}
+                for (let i = 1; i <= image.texts.length; i++) {
+                    const argKey = `text${i}`
+                    args[argKey] = { required: true }
+                }
+                return args
+            }())
+            .handler((message, args) => this.replyWithImage(message, name, args))
+            .build()
+
+        registry.add(command)
     }
 }

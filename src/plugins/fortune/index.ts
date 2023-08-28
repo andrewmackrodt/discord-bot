@@ -1,6 +1,6 @@
 import axios from 'axios'
-import type { Message } from 'discord.js'
-import type { Plugin, NextFunction } from '../../../types/plugins'
+import { Message } from 'discord.js'
+import { command } from '../../utils/command'
 
 const url = 'http://yerkee.com/api/fortune'
 
@@ -8,14 +8,15 @@ interface FortuneResponse {
     fortune: string
 }
 
-export default class FortunePlugin implements Plugin {
-    public async onMessage(msg: Message, next: NextFunction): Promise<any> {
-        if (msg.content.match(/!fortune/i) === null) {
-            return next()
-        }
-
+export default class FortunePlugin {
+    @command('fortune', {
+        emoji: ':fortune_cookie:',
+        title: 'Fortune',
+        description: 'Fetches a random fortune',
+    })
+    public async replyFortune(message: Message): Promise<any> {
         const response = await axios.get<FortuneResponse>(url)
-
-        return msg.reply(response.data.fortune)
+        const { fortune } = response.data
+        return message.reply(`:fortune_cookie: ${fortune}`)
     }
 }

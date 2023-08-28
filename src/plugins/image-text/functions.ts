@@ -22,7 +22,7 @@ type TextPosition = { w: number; h: number } & (
     { x: number; y: number; gravity?: string } |
     { gravity?: string } )
 
-interface Image {
+export interface Image {
     filename: string
     width: number
     height: number
