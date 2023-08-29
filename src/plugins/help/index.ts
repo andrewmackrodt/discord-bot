@@ -40,6 +40,8 @@ export default class HelpPlugin implements Plugin {
         return message.channel.send({
             embeds: [{
                 title: ':robot:  Bot Commands',
+                description: 'Commands listed with `<>` require arguments, e.g. `.8ball <question>`. A question mark' +
+                    ' indicates that the argument is optional, e.g. `.roll <2d10?>`.\n---',
                 fields: commands.map(c => ({
                     name: getFieldName(c),
                     inline: true,

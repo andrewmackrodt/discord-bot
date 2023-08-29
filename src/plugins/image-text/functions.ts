@@ -23,6 +23,7 @@ type TextPosition = { w: number; h: number } & (
     { gravity?: string } )
 
 export interface Image {
+    name: string
     filename: string
     width: number
     height: number
@@ -40,6 +41,7 @@ interface CreateImageResult {
 
 export const images: Record<string, Image> = {
     batman: {
+        name: 'Batman slapping Robin',
         filename: 'batman.png',
         font: path.resolve(fontsPath, 'NotoSans/NotoSans-Regular.ttf'),
         width: 580,
@@ -51,6 +53,7 @@ export const images: Record<string, Image> = {
         ],
     },
     dg: {
+        name: 'Disaster Girl',
         filename: 'disaster-girl.png',
         width: 577,
         height: 433,
@@ -62,6 +65,7 @@ export const images: Record<string, Image> = {
         ],
     },
     drake: {
+        name: 'Drake Hotline Bling',
         filename: 'drake.jpg',
         width: 717,
         height: 717,
@@ -72,6 +76,7 @@ export const images: Record<string, Image> = {
         ],
     },
     morty: {
+        name: 'You son of a *****',
         filename: 'morty.gif',
         width: 640,
         height: 360,
@@ -82,6 +87,7 @@ export const images: Record<string, Image> = {
         ],
     },
     success: {
+        name: 'Success Kid',
         filename: 'success-kid.jpg',
         width: 500,
         height: 500,
