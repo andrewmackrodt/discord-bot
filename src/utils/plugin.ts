@@ -1,6 +1,14 @@
 import type { Message } from 'discord.js'
 import type { Command } from '../registries/Command'
 
+export function sendErrorToChannel(message: Message, text: string): Promise<any> {
+    return message.channel.send(error(text))
+}
+
+export function sendGenericErrorToChannel(message: Message): Promise<any> {
+    return message.channel.send(error('an unknown error has occurred'))
+}
+
 export function error(text: string): string {
     return `_error: ${text}_`
 }
