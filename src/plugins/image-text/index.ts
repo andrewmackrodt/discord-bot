@@ -46,8 +46,10 @@ export default class ImageTextPlugin implements Plugin {
             .args(function () {
                 const args: Record<string, CommandArgumentOptions> = {}
                 for (let i = 1; i <= image.texts.length; i++) {
-                    const argKey = `text${i}`
-                    args[argKey] = { required: true }
+                    const name = image.texts.length === 1
+                        ? 'text'
+                        : `text${i}`
+                    args[name] = { required: true }
                 }
                 return args
             }())
