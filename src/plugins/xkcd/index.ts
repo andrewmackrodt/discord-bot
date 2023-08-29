@@ -22,10 +22,15 @@ export default class XkcdPlugin {
         let getComicURL: string
 
         if (typeof id === 'string') {
-            if (isNaN(parseInt(id)) || parseInt(id) < 1) {
-                throw new CommandUsageError('xkcd', 'id must be a positive number')
+            if (id === 'latest') {
+                getComicURL = comicByIdUrl.replace(':id/', '')
+            } else {
+                if (isNaN(parseInt(id)) || parseInt(id) < 1) {
+                    throw new CommandUsageError('xkcd', 'id must be "latest" or a positive number')
+                }
+                getComicURL = comicByIdUrl.replace(':id', id)
             }
-            getComicURL = comicByIdUrl.replace(':id', id)
+
         } else {
             getComicURL = randomComicUrl
         }
@@ -42,7 +47,7 @@ export default class XkcdPlugin {
             return sendGenericErrorToChannel(message)
         }
 
-        const comicURL = response.request.res.responseUrl
+        let comicURL = response.request.res.responseUrl
         const doc = cheerio(response.data).root()
         const title = doc.find('#ctitle').first().text() || 'xkcd comic'
         const img = doc.find('#comic img[src*="/comics/"]').first()
@@ -52,8 +57,15 @@ export default class XkcdPlugin {
             return sendGenericErrorToChannel(message)
         }
 
-        if (imageURL.match(/^\/\//)) {
+        if (imageURL.startsWith('//')) {
             imageURL = `https:${imageURL}`
+        }
+
+        if (id === 'latest') {
+            const metaURL = doc.find('meta[property="og:url"]').first().attr('content')?.trim()
+            if (metaURL) {
+                comicURL = metaURL.startsWith('//') ? `https:${metaURL}` : metaURL
+            }
         }
 
         const embed = new EmbedBuilder()
