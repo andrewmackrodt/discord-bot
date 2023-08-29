@@ -22,8 +22,8 @@ export default class SongOfTheDayAddCommand {
             trackId: { required: true, example: 'https://open.spotify.com/track/70cI6K8qorn5eOICHkUo95' },
         },
     })
-    public async add(message: Message, args: string[]): Promise<Message> {
-        const trackId = this.spotifyService.extractTrackId(args[0])
+    public async add(message: Message, url: string): Promise<Message> {
+        const trackId = this.spotifyService.extractTrackId(url)
 
         if ( ! trackId) {
             throw new CommandUsageError('sotd add', 'trackId is malformed')

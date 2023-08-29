@@ -8,9 +8,9 @@ import { Command } from '../../registries/Command'
 import type { CommandRegistry } from '../../registries/CommandRegistry'
 
 export default class ImageTextPlugin implements Plugin {
-    public async replyWithImage(message: Message, name: string, args: string[]): Promise<any> {
+    public async replyWithImage(message: Message, name: string, ...texts: string[]): Promise<any> {
         try {
-            const image = await createImage(name, args)
+            const image = await createImage(name, texts)
             const ext = image.name.split('.').pop()
             const attachment = new AttachmentBuilder(image.data, { name: `file.${ext}` })
             await message.channel.send({ files: [attachment] })
@@ -51,7 +51,7 @@ export default class ImageTextPlugin implements Plugin {
                 }
                 return args
             }())
-            .handler((message, args) => this.replyWithImage(message, name, args))
+            .handler((message, ...args) => this.replyWithImage(message, name, ...args))
             .build()
 
         registry.add(command)

@@ -59,7 +59,7 @@ export function registerCommandsFromDecorators<T>(registry: CommandRegistry, ins
                 parent,
                 command,
                 // @ts-expect-error TS7053
-                handler: (message, args) => instance[method](message, args),
+                handler: (message, ...args) => instance[method](message, ...args),
             },
         })
     }

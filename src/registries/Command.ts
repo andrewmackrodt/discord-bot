@@ -21,7 +21,7 @@ export interface CommandArgumentOptions {
 
 export type CommandBuilderWithCommand = BuilderWithArgs<CommandOptions, typeof Command, 'command'>
 
-type CommandHandler = (message: Message, args: string[]) => Promise<any>
+type CommandHandler = (message: Message, ...args: string[]) => Promise<any>
 
 export type Subcommand = Command & Required<Pick<Command, 'parent'>>
 
@@ -66,6 +66,6 @@ export class Command {
     }
 
     public execute(message: Message, args: string[]): Promise<any> {
-        return this.handler!(message, args)
+        return this.handler!(message, ...args)
     }
 }

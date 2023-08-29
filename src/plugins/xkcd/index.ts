@@ -18,15 +18,14 @@ export default class XkcdPlugin {
             id: {},
         },
     })
-    public async replyComic(message: Message, args: string[]): Promise<any> {
+    public async replyComic(message: Message, id?: string): Promise<any> {
         let getComicURL: string
 
-        if (typeof args[0] !== 'undefined') {
-            const id = parseInt(args[0])
-            if (isNaN(id) || id < 1) {
+        if (typeof id === 'string') {
+            if (isNaN(parseInt(id)) || parseInt(id) < 1) {
                 throw new CommandUsageError('xkcd', 'id must be a positive number')
             }
-            getComicURL = comicByIdUrl.replace(':id', id.toString())
+            getComicURL = comicByIdUrl.replace(':id', id)
         } else {
             getComicURL = randomComicUrl
         }
@@ -46,7 +45,7 @@ export default class XkcdPlugin {
         const comicURL = response.request.res.responseUrl
         const doc = cheerio(response.data).root()
         const title = doc.find('#ctitle').first().text() || 'xkcd comic'
-        const img = doc.find('#comic > img[src*="/comics/"]').first()
+        const img = doc.find('#comic img[src*="/comics/"]').first()
         let imageURL = img.attr('src')
 
         if ( ! comicURL || typeof imageURL !== 'string') {

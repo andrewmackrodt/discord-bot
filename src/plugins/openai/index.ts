@@ -21,12 +21,10 @@ export default class OpenAIPlugin implements Plugin {
             question: { required: true },
         },
     })
-    public async ask(message: Message, args: string[]) {
+    public async ask(message: Message, question: string) {
         if ( ! this.isSupported) {
             return message.reply(CONFIG_ERROR_TEXT)
         }
-
-        const question = args[0]
 
         if (question.length === 0) {
             return message.reply(NO_MESSAGE_ERROR_TEXT)

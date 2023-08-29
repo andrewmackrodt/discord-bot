@@ -16,14 +16,14 @@ export abstract class AbstractSongOfTheDayHistoryCommand {
     ) {
     }
 
-    protected async sendInitialHistoryMessage(message: Message, args: string[] = []): Promise<Message> {
+    protected async sendInitialHistoryMessage(message: Message, userId?: string): Promise<Message> {
         const options: PaginatedOptionalUserQuery = { page: 1 }
 
-        if (args.length > 0) {
-            options.userId = await lookupUserId(message.channel, args[0], this.repository)
+        if (typeof userId === 'string') {
+            options.userId = await lookupUserId(message.channel, userId, this.repository)
 
             if ( ! options.userId) {
-                return message.channel.send(error(`unknown user: ${args[0]}`))
+                return message.channel.send(error(`unknown user: ${userId}`))
             }
         }
 

@@ -31,8 +31,8 @@ export default class SongOfTheDayHistoryCommand extends AbstractSongOfTheDayHist
             username: {},
         },
     })
-    public async history(message: Message, args: string[] = []): Promise<Message> {
-        return this.sendInitialHistoryMessage(message, args)
+    public async history(message: Message, userId?: string): Promise<Message> {
+        return this.sendInitialHistoryMessage(message, userId)
     }
 
     @interaction(Interactions.HistoryNext)
