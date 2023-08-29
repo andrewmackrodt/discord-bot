@@ -14,8 +14,8 @@ export default class OpenAIPlugin implements Plugin {
 
     @command('ask', {
         emoji: ':robot:',
-        title: 'ChatGPT',
-        description: 'Ask ChatGPT v4 a question',
+        title: 'GPT-4',
+        description: 'Ask GPT-4 a question.',
         separator: null,
         args: {
             question: { required: true },

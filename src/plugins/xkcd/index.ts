@@ -13,7 +13,7 @@ export default class XkcdPlugin {
     @command('xkcd', {
         emoji: ':newspaper:',
         title: 'xkcd',
-        description: 'Fetch a comic from xkcd. Omit id to return a random comic.',
+        description: 'Fetch a comic from xkcd.',
         args: {
             id: {},
         },

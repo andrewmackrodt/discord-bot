@@ -34,6 +34,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         registry.add('sotd', builder => builder
             .emoji(':notepad_spiral:')
             .title('Song of the Day')
+            .description('Song of the Day plugin.')
             .build())
 
         this.commands.forEach(instance => registerCommandsFromDecorators(registry, instance))

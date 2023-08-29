@@ -14,6 +14,10 @@ export class CommandRegistry {
         return this.commands[command.command] = command
     }
 
+    public list(): Command[] {
+        return Object.values(this.commands)
+    }
+
     public get(name: string): Command | null {
         return this.commands[name] ?? null
     }

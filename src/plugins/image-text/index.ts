@@ -41,6 +41,7 @@ export default class ImageTextPlugin implements Plugin {
     private registerImageCommand(registry: CommandRegistry, name: string, image: Image) {
         const command = Command.builder()
             .command(name)
+            .description('Create a meme.')
             .separator(';')
             .args(function () {
                 const args: Record<string, CommandArgumentOptions> = {}

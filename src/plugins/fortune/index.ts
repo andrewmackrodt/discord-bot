@@ -12,7 +12,7 @@ export default class FortunePlugin {
     @command('fortune', {
         emoji: ':fortune_cookie:',
         title: 'Fortune',
-        description: 'Fetches a random fortune',
+        description: 'Fetch a random fortune.',
     })
     public async replyFortune(message: Message): Promise<any> {
         const response = await axios.get<FortuneResponse>(url)
