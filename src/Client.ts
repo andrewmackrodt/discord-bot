@@ -181,7 +181,7 @@ export class Client {
     }
 
     protected tryHandleCommand = async (message: Message): Promise<boolean> => {
-        const match = message.content.match(/^[#!.-]([a-z][a-z0-9_-]+)\b/i)
+        const match = message.content.match(/^[#!.-]([a-z0-9][a-z0-9_-]+)\b/i)
 
         if ( ! match) {
             return false
