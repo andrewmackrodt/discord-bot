@@ -8,6 +8,7 @@ import { Schedule } from './Schedule'
 import { CommandUsageError, registerCommandsFromDecorators } from './utils/command'
 import { registerInteractionsFromDecorators } from './utils/interaction'
 import { replyWithCommandHelp } from './utils/plugin'
+import { split } from './utils/string'
 import type { NextFunction, Plugin } from '../types/plugins'
 
 type PluginEvent = 'onMessage' | 'onMessageReactionAdd' | 'onMessageReactionRemove' | 'onInteraction'
@@ -216,14 +217,20 @@ export class Client {
 
         const minArgsLength = Object.values(command.args).filter(a => a.required).length
         const maxArgsLength = Object.keys(command.args).length
+        let args: string[] = []
 
-        const args = content
-            ? command.separator
-                ? content.split(command.separator)
-                    .map(s => s.trim())
-                    .filter(s => s.length > 0)
-                : [content.trim()]
-            : []
+        if (content) {
+            if (command.separator) {
+                if (command.lastArgIsText) {
+                    const limit = maxArgsLength - 1
+                    args = split(content, command.separator, limit)
+                } else {
+                    args = content.split(command.separator).map(s => s.trim()).filter(s => s.length > 0)
+                }
+            } else {
+                args.push(content.trim())
+            }
+        }
 
         if (maxArgsLength < args.length || args.length < minArgsLength) {
             void replyWithCommandHelp(message, command, 'incorrect number of arguments')

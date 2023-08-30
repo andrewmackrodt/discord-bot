@@ -9,6 +9,7 @@ export interface CommandOptions {
     title?: string
     description?: string
     separator?: string | RegExp | null
+    lastArgIsText?: boolean
     args?: Record<string, CommandArgumentOptions>
     handler?: CommandHandler
     subcommands?: Record<string, Subcommand>
@@ -32,6 +33,7 @@ export class Command {
     public readonly title?: string
     public readonly description?: string
     public readonly separator: string | RegExp | null
+    public readonly lastArgIsText: boolean
     public readonly args: Record<string, CommandArgumentOptions>
     public handler?: CommandHandler
     public readonly subcommands: Record<string, Subcommand>
@@ -47,6 +49,7 @@ export class Command {
         this.title = options?.title
         this.description = options?.description
         this.separator = typeof options?.separator === 'undefined' ? /\s+/ : options.separator
+        this.lastArgIsText = options.lastArgIsText ?? false
         this.args = options?.args ?? {}
         this.handler = options?.handler
         this.subcommands = options?.subcommands ?? {}

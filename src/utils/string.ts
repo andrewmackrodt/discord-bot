@@ -14,6 +14,25 @@ export function padRight(text: string, len: number): string {
     return `${text}${pad}`
 }
 
+// https://stackoverflow.com/a/64296576/650329
+export function split(input: string, separator: RegExp | string, limit?: number) {
+    const _separator = new RegExp(separator, 'g')
+    let _limit = limit ?? -1
+    let finalIndex = 0
+    const output = []
+    while (_limit--) {
+        const lastIndex = _separator.lastIndex
+        const search = _separator.exec(input)
+        if (search === null) {
+            break
+        }
+        finalIndex = _separator.lastIndex
+        output.push(input.slice(lastIndex, search.index))
+    }
+    output.push(input.slice(finalIndex))
+    return output
+}
+
 function toMarkdownRow(cols: string[]) {
     return '| ' + cols.join(' | ') + ' |'
 }

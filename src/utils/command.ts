@@ -7,6 +7,7 @@ export type DecoratorOptions = Pick<CommandOptions,
     'title' |
     'description' |
     'separator' |
+    'lastArgIsText' |
     'args' >
 
 interface DecoratorRegistration {
