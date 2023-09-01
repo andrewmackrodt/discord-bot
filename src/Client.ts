@@ -207,8 +207,11 @@ export class Client {
             const subcommand = command.subcommands[word]
 
             if ( ! subcommand) {
-                void replyWithCommandHelp(message, command, `unknown subcommand "${word}"`)
-                return true
+                if (Object.keys(command.args).length === 0) {
+                    void replyWithCommandHelp(message, command, `unknown subcommand "${word}"`)
+                    return true
+                }
+                break
             }
 
             command = subcommand

@@ -1,6 +1,4 @@
-import type { ButtonInteraction, Channel } from 'discord.js'
-import { ChannelType } from 'discord.js'
-import type { SongOfTheDayRepository } from './repositories/SongOfTheDayRepository'
+import type { ButtonInteraction } from 'discord.js'
 
 const trackIdRegExp = new RegExp(/\bspotify.com\/track\/([A-Za-z0-9_-]{10,})\b|^([A-Za-z0-9_-]{10,})$/)
 
@@ -12,40 +10,6 @@ export function extractTrackId(url: string): string | null {
 export interface PaginatedOptionalUserQuery {
     page?: number
     userId?: string
-}
-
-export async function lookupUserId(
-    channel: Channel,
-    nameOrMention: string,
-    repository?: SongOfTheDayRepository,
-) : Promise<string | undefined> {
-    if (channel.type !== ChannelType.GuildText) {
-        return
-    }
-
-    const userIdMentionMatch = nameOrMention.match(/^<@([0-9]+)>$/)
-
-    if (userIdMentionMatch) {
-        return userIdMentionMatch[1]
-    }
-
-    const member = channel.members.find(m => (
-        m.user.username.localeCompare(nameOrMention, undefined, { sensitivity: 'base' }) === 0
-    ))
-
-    if (member) {
-        return member.id
-    }
-
-    if ( ! repository) {
-        return
-    }
-
-    const user = await repository.getUserByName(nameOrMention)
-
-    if (user) {
-        return user.id
-    }
 }
 
 export async function suppressInteractionReply(interaction: ButtonInteraction) {

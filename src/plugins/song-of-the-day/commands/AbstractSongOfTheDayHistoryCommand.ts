@@ -1,8 +1,8 @@
 import type { MessageCreateOptions, MessageEditOptions, Interaction, Message } from 'discord.js'
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js'
-import { error } from '../../../utils/plugin'
+import { error, lookupUserId } from '../../../utils/plugin'
 import type { PaginatedOptionalUserQuery } from '../helpers'
-import { lookupUserId, suppressInteractionReply } from '../helpers'
+import { suppressInteractionReply } from '../helpers'
 import type { SongOfTheDayRepository } from '../repositories/SongOfTheDayRepository'
 
 export abstract class AbstractSongOfTheDayHistoryCommand {
@@ -20,7 +20,7 @@ export abstract class AbstractSongOfTheDayHistoryCommand {
         const options: PaginatedOptionalUserQuery = { page: 1 }
 
         if (typeof userId === 'string') {
-            options.userId = await lookupUserId(message.channel, userId, this.repository)
+            options.userId = await lookupUserId(message.channel, userId)
 
             if ( ! options.userId) {
                 return message.channel.send(error(`unknown user: ${userId}`))

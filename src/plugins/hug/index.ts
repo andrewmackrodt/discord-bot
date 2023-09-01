@@ -1,7 +1,6 @@
 import { Message } from 'discord.js'
 import { command } from '../../utils/command'
-import { sendGenericErrorReply } from '../../utils/plugin'
-import { lookupUserId } from '../song-of-the-day/helpers'
+import { lookupUserId, sendGenericErrorReply } from '../../utils/plugin'
 
 export default class HugPlugin {
     @command('hug', {

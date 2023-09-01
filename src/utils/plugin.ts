@@ -1,4 +1,5 @@
-import type { Message } from 'discord.js'
+import type { Message , Channel } from 'discord.js'
+import { ChannelType } from 'discord.js'
 import type { Command } from '../registries/Command'
 
 export function sendErrorReply(message: Message, text: string): Promise<any> {
@@ -95,5 +96,26 @@ function findFirst<K extends keyof Command>(command: Command, key: K): Command[K
         if (typeof c[key] !== 'undefined') {
             return c[key]
         }
+    }
+}
+
+export async function lookupUserId(channel: Channel, nameOrMention: string): Promise<string | undefined> {
+    if (channel.type !== ChannelType.GuildText) {
+        return
+    }
+
+    const userIdMentionMatch = nameOrMention.match(/^<@([0-9]+)>$/)
+
+    if (userIdMentionMatch) {
+        return userIdMentionMatch[1]
+    }
+
+    const member = channel.members.find(m => (
+        m.user.username.localeCompare(nameOrMention, undefined, { sensitivity: 'base' }) === 0 ||
+        m.user.globalName?.localeCompare(nameOrMention, undefined, { sensitivity: 'base' }) === 0
+    ))
+
+    if (member) {
+        return member.id
     }
 }
