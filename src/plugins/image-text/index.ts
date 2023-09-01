@@ -40,10 +40,10 @@ export default class ImageTextPlugin implements Plugin {
 
     private registerImageCommand(registry: CommandRegistry, name: string, image: Image) {
         const command = Command.builder()
-            .command(name)
-            .description(`${image.name.replaceAll('*', '\\*')} meme generator.`)
-            .separator(';')
-            .args(function () {
+            .setCommand(name)
+            .setDescription(`${image.name.replaceAll('*', '\\*')} meme generator.`)
+            .setSeparator(';')
+            .setArgs(function () {
                 const args: Record<string, CommandArgumentOptions> = {}
                 for (let i = 1; i <= image.texts.length; i++) {
                     const name = image.texts.length === 1
@@ -53,7 +53,7 @@ export default class ImageTextPlugin implements Plugin {
                 }
                 return args
             }())
-            .handler((message, ...args) => this.replyWithImage(message, name, ...args))
+            .setHandler((message, ...args) => this.replyWithImage(message, name, ...args))
             .build()
 
         registry.add(command)

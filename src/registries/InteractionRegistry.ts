@@ -9,7 +9,7 @@ export class InteractionRegistry {
 
     public add(interaction: Interaction | string, cb?: (builder: InteractionBuilderWithInteraction) => Interaction): Interaction {
         if (typeof interaction === 'string') {
-            interaction = cb!(Interaction.builder().interaction(interaction))
+            interaction = cb!(Interaction.builder().setInteraction(interaction))
         }
         return this.interactions[interaction.interaction] = interaction
     }

@@ -77,7 +77,10 @@ export function registerCommandsFromDecorators<T>(registry: CommandRegistry, ins
                 const word = words[i]
 
                 if (! (word in command.subcommands)) {
-                    command.subcommands[word] = Command.builder().parent(command).command(word).build()
+                    command.subcommands[word] = Command.builder()
+                        .setParent(command)
+                        .setCommand(word)
+                        .build()
                 }
 
                 command = command.subcommands[word]

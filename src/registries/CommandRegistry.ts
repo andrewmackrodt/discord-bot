@@ -9,7 +9,7 @@ export class CommandRegistry {
 
     public add(command: Command | string, cb?: (builder: CommandBuilderWithCommand) => Command): Command {
         if (typeof command === 'string') {
-            command = cb!(Command.builder().command(command))
+            command = cb!(Command.builder().setCommand(command))
         }
         return this.commands[command.command] = command
     }

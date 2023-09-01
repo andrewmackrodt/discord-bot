@@ -52,9 +52,9 @@ export default class AnimalsPlugin implements Plugin {
 
     private registerImageCommand(registry: CommandRegistry, animal: Animal) {
         const command = Command.builder()
-            .command(animal)
-            .description(`Fetch a random ${animal} image.`)
-            .handler(message => this.replyWithImage(message, animal))
+            .setCommand(animal)
+            .setDescription(`Fetch a random ${animal} image.`)
+            .setHandler(message => this.replyWithImage(message, animal))
             .build()
 
         registry.add(command)

@@ -32,9 +32,9 @@ export default class SongOfTheDayPlugin implements Plugin {
 
     public doCommandRegistration(registry: CommandRegistry) {
         registry.add('sotd', builder => builder
-            .emoji(':notepad_spiral:')
-            .title('Song of the Day')
-            .description('Song of the Day plugin.')
+            .setEmoji(':notepad_spiral:')
+            .setTitle('Song of the Day')
+            .setDescription('Song of the Day plugin.')
             .build())
 
         this.commands.forEach(instance => registerCommandsFromDecorators(registry, instance))
