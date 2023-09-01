@@ -37,7 +37,7 @@ export default class HelpPlugin implements Plugin {
         if (this.pageCount > 1) {
             embed.setFooter({ text: `Page 1 of ${this.pageCount}` })
             options.components = [
-                new ActionRowBuilder().addComponents(
+                new ActionRowBuilder<ButtonBuilder>().addComponents(
                     new ButtonBuilder()
                         .setCustomId(Interactions.HelpPrev)
                         .setLabel('Previous')
@@ -48,7 +48,7 @@ export default class HelpPlugin implements Plugin {
                         .setLabel('Next')
                         .setStyle(ButtonStyle.Secondary)
                         .setEmoji('⏭'),
-                ) as any,
+                ),
             ]
         }
 

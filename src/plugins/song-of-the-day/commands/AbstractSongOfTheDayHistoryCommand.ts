@@ -34,7 +34,7 @@ export abstract class AbstractSongOfTheDayHistoryCommand {
         }
 
         embed.components = [
-            new ActionRowBuilder().addComponents(
+            new ActionRowBuilder<ButtonBuilder>().addComponents(
                 new ButtonBuilder()
                     .setCustomId(this.prevInteractionCustomId)
                     .setLabel('Previous')
@@ -45,7 +45,7 @@ export abstract class AbstractSongOfTheDayHistoryCommand {
                     .setLabel('Next')
                     .setStyle(ButtonStyle.Secondary)
                     .setEmoji('⏭'),
-            ) as any,
+            ),
         ]
 
         return message.channel.send(embed)
