@@ -22,6 +22,6 @@ export default class SongOfTheDayRandomCommand {
 
         const url = `https://open.spotify.com/track/${song.trackId}`
 
-        return message.channel.send(`:musical_note: **${song.artist} - ${song.title}** added by ${song.user.name} on ${song.date}\n${url}`)
+        return message.channel.send(`:musical_note:  **${song.artist} - ${song.title}** added by ${song.user.name} on ${song.date}\n${url}`)
     }
 }

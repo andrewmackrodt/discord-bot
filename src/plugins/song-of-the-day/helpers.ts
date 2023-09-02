@@ -1,6 +1,13 @@
-import type { Channel, ButtonInteraction } from 'discord.js'
+import type { ButtonInteraction, Channel } from 'discord.js'
 import { ChannelType } from 'discord.js'
 import type { SongOfTheDayRepository } from './repositories/SongOfTheDayRepository'
+
+const trackIdRegExp = new RegExp(/\bspotify.com\/track\/([A-Za-z0-9_-]{10,})\b|^([A-Za-z0-9_-]{10,})$/)
+
+export function extractTrackId(url: string): string | null {
+    const match = trackIdRegExp.exec(url)
+    return match ? (match[1] ?? match[2]) : null
+}
 
 export interface PaginatedOptionalUserQuery {
     page?: number

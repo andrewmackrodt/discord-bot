@@ -4,6 +4,7 @@ import { injectable } from 'tsyringe'
 import type { User } from '../../../models/User'
 import { command, CommandUsageError } from '../../../utils/command'
 import { error, success } from '../../../utils/plugin'
+import { extractTrackId } from '../helpers'
 import type { Song } from '../models/Song'
 import { SongOfTheDayRepository } from '../repositories/SongOfTheDayRepository'
 import { SpotifyService } from '../services/SpotifyService'
@@ -23,7 +24,7 @@ export default class SongOfTheDayAddCommand {
         },
     })
     public async add(message: Message, url: string): Promise<Message> {
-        const trackId = this.spotifyService.extractTrackId(url)
+        const trackId = extractTrackId(url)
 
         if ( ! trackId) {
             throw new CommandUsageError('sotd add', 'trackId is malformed')

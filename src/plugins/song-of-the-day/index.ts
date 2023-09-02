@@ -2,6 +2,7 @@ import type Discord from 'discord.js'
 import { injectable } from 'tsyringe'
 import SongOfTheDayAddCommand from './commands/SongOfTheDayAddCommand'
 import SongOfTheDayHistoryCommand from './commands/SongOfTheDayHistoryCommand'
+import SongOfTheDayInfoCommand from './commands/SongOfTheDayInfoCommand'
 import SongOfTheDayNominationsCommand from './commands/SongOfTheDayNominationsCommand'
 import SongOfTheDayRandomCommand from './commands/SongOfTheDayRandomCommand'
 import SongOfTheDayStatsCommand from './commands/SongOfTheDayStatsCommand'
@@ -20,6 +21,7 @@ export default class SongOfTheDayPlugin implements Plugin {
         private readonly notificationService: SongOfTheDayNotificationService,
         private readonly add: SongOfTheDayAddCommand,
         private readonly history: SongOfTheDayHistoryCommand,
+        private readonly info: SongOfTheDayInfoCommand,
         private readonly nominations: SongOfTheDayNominationsCommand,
         private readonly random: SongOfTheDayRandomCommand,
         private readonly stats: SongOfTheDayStatsCommand,
@@ -27,7 +29,7 @@ export default class SongOfTheDayPlugin implements Plugin {
     }
 
     protected get commands() {
-        return [this.add, this.history, this.nominations, this.random, this.stats]
+        return [this.add, this.history, this.info, this.nominations, this.random, this.stats]
     }
 
     public doCommandRegistration(registry: CommandRegistry) {

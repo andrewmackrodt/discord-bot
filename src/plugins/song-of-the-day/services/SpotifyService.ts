@@ -9,8 +9,6 @@ interface SpotifyClient {
     tokenExpiresAt: Date
 }
 
-const trackIdRegExp = new RegExp(/\bspotify.com\/track\/([A-Za-z0-9_-]{10,})\b|^([A-Za-z0-9_-]{10,})$/)
-
 @component()
 export class SpotifyService {
     private readonly cache: Record<string, SpotifyClient> = {}
@@ -18,11 +16,6 @@ export class SpotifyService {
     public constructor(
         private readonly repository: SongOfTheDayRepository,
     ) {
-    }
-
-    public extractTrackId(url: string): string | null {
-        const match = trackIdRegExp.exec(url)
-        return match ? (match[1] ?? match[2]) : null
     }
 
     /**
