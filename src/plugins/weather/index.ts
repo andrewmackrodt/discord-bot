@@ -40,6 +40,45 @@ interface Forecast {
     elevation: number
     current_weather: CurrentWeather
 }
+
+enum WeatherCode {
+    ClearSkies = 0,
+    MainlyClearSkies = 1,
+    PartlyCloudySkies = 2,
+    OvercastSkies = 3,
+    Fog = 45,
+    DepositingRimeFog = 48,
+    LightDrizzle = 51,
+    ModerateDrizzle = 53,
+    DenseDrizzle = 55,
+    LightFreezingDrizzle = 56,
+    DenseFreezingDrizzle = 57,
+    SlightRain = 61,
+    ModerateRain = 63,
+    HeavyRain = 65,
+    LightFreezingRain = 66,
+    HeavyFreezingRain = 67,
+    SlightSnowfall = 71,
+    ModerateSnowfall = 73,
+    HeavySnowfall = 75,
+    SnowGrains = 77,
+    SlightRainShowers = 80,
+    ModerateRainShowers = 81,
+    ViolentRainShowers = 82,
+    SlightSnowShowers = 85,
+    HeavySnowShowers = 86,
+    Thunderstorms = 95,
+    ThunderstormsWithSlightHail = 96,
+    ThunderstormsWithHeavyHail = 99,
+}
+
+function getWeatherCodeText(code: WeatherCode | number): string | null {
+    const item = Object.entries(WeatherCode).find(([k, v]) => v === code)
+    if ( ! item) {
+        return null
+    }
+    return item[0].replaceAll(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()
+}
 //endregion
 
 export default class WeatherPlugin {
@@ -61,7 +100,12 @@ export default class WeatherPlugin {
             const { current_weather } = await this.getForecast(geocode.lat, geocode.lon)
             const { temperature } = current_weather
             const country = geocode.display_name.split(', ').pop()
-            return message.reply(`The current temperature in ${geocode.name} (${country}) is ${temperature} C`)
+            let content = `The current temperature in ${geocode.name} (${country}) is ${temperature} C`
+            const condition = getWeatherCodeText(current_weather.weathercode)
+            if (condition) {
+                content += `, expect to experience ${condition}`
+            }
+            return message.reply(content)
         } catch (e) {
             return sendGenericErrorToChannel(message)
         }
