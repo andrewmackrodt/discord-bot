@@ -3,20 +3,22 @@ import { Message } from 'discord.js'
 import { command } from '../../utils/command'
 import { sendErrorToChannel, sendGenericErrorToChannel } from '../../utils/plugin'
 
-type Collection<T> = {
-    results?: T[]
-    generationtime_ms: number
-}
-
+//region interfaces
 interface Geocode {
-    id: number
+    place_id: number
+    licence: string
+    osm_type: string
+    osm_id: number
+    lat: string
+    lon: string
+    category: string
+    type: string
+    place_rank: number
+    importance: number
+    addresstype: string
     name: string
-    latitude: number
-    longitude: number
-    elevation: number
-    country_code: string
-    country_id: number
-    country: string
+    display_name: string
+    boundingbox: [string, string, string, string]
 }
 
 interface CurrentWeather {
@@ -38,7 +40,7 @@ interface Forecast {
     elevation: number
     current_weather: CurrentWeather
 }
-
+//endregion
 
 export default class WeatherPlugin {
     @command('weather', {
@@ -47,42 +49,41 @@ export default class WeatherPlugin {
         description: 'Fetch the current temperate.',
         separator: null,
         args: {
-            city: { required: true },
+            location: { required: true },
         },
     })
-    public async replyWeather(message: Message, city: string): Promise<any> {
+    public async replyWeather(message: Message, location: string): Promise<any> {
         try {
-            const geocode = await this.searchGeocode(city)
+            const geocode = await this.searchGeocode(location)
             if ( ! geocode) {
                 return sendErrorToChannel(message, 'unknown city')
             }
-            const { current_weather } = await this.getForecast(geocode.latitude, geocode.longitude)
+            const { current_weather } = await this.getForecast(geocode.lat, geocode.lon)
             const { temperature } = current_weather
-            return message.reply(`The current temperature in ${geocode.name} (${geocode.country_code}) is ${temperature} C`)
+            const country = geocode.display_name.split(', ').pop()
+            return message.reply(`The current temperature in ${geocode.name} (${country}) is ${temperature} C`)
         } catch (e) {
             return sendGenericErrorToChannel(message)
         }
     }
 
-    protected async searchGeocode(city: string): Promise<Geocode | null> {
-        const { data } = await axios.get<Collection<Geocode>>(
-            'https://geocoding-api.open-meteo.com/v1/search', {
+    protected async searchGeocode(location: string): Promise<Geocode | null> {
+        const { data } = await axios.get<Geocode[]>(
+            'https://nominatim.openstreetmap.org/search.php', {
                 params: {
-                    name: city,
-                    count: 1,
-                    language: 'en',
-                    format: 'json',
+                    q: location,
+                    format: 'jsonv2',
                 },
             })
 
-        if ( ! data.results || data.results.length === 0) {
+        if (data.length === 0) {
             return null
         }
 
-        return data.results[0]
+        return data[0]
     }
 
-    protected async getForecast(latitude: number, longitude: number): Promise<Forecast> {
+    protected async getForecast(latitude: string, longitude: string): Promise<Forecast> {
         const { data } = await axios.get<Forecast>(
             'https://api.open-meteo.com/v1/forecast', {
                 params: {
