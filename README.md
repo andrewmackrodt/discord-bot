@@ -4,9 +4,11 @@ Node.js Discord Bot.
 
 ## Requirements
 
-**Operating System**: 🍏 macOS or 🐧 Linux. 🪟 Windows has not been tested.
+**Operating System**: 🍏 macOS or 🐧 Linux. 🪟 Windows has only been tested using WSL2.
 
 **Runtime:** Node 18+, npm
+
+**Additional Packages:** graphicsmagick
 
 ## Installation
 
