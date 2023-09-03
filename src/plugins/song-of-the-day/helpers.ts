@@ -17,13 +17,13 @@ export interface PaginatedOptionalUserQuery {
 export async function lookupUserId(
     channel: Channel,
     nameOrMention: string,
-    repository: SongOfTheDayRepository,
+    repository?: SongOfTheDayRepository,
 ) : Promise<string | undefined> {
     if (channel.type !== ChannelType.GuildText) {
         return
     }
 
-    const userIdMentionMatch = nameOrMention.match(/^<@!([0-9]+)>$/)
+    const userIdMentionMatch = nameOrMention.match(/^<@([0-9]+)>$/)
 
     if (userIdMentionMatch) {
         return userIdMentionMatch[1]
@@ -35,6 +35,10 @@ export async function lookupUserId(
 
     if (member) {
         return member.id
+    }
+
+    if ( ! repository) {
+        return
     }
 
     const user = await repository.getUserByName(nameOrMention)
