@@ -1,6 +1,6 @@
 import { Message } from 'discord.js'
 import { OpenAI } from 'openai'
-import type { CreateChatCompletionRequestMessage } from 'openai/resources/chat'
+import type { ChatCompletionMessageParam } from 'openai/resources/chat'
 import type { NextFunction, Plugin } from '../../../types/plugins'
 import { command } from '../../utils/command'
 import { error } from '../../utils/plugin'
@@ -30,7 +30,33 @@ export default class OpenAIPlugin implements Plugin {
             return message.reply(NO_MESSAGE_ERROR_TEXT)
         }
 
-        const prompts: CreateChatCompletionRequestMessage[] = []
+        const prompts: ChatCompletionMessageParam[] = []
+        prompts.push({ role: 'user', content: question })
+
+        return this.sendChatCompletionAndReply(message, prompts)
+    }
+
+    @command('news', {
+        emoji: ':onion:',
+        title: 'Fake News',
+        description: 'Generate a satirical news story.',
+        lastArgIsText: true,
+        args: {
+            topic: {},
+        },
+    })
+    public async news(message: Message, topic?: string) {
+        if ( ! this.isSupported) {
+            return message.reply(CONFIG_ERROR_TEXT)
+        }
+
+        if ( ! topic || (topic = topic.trim()).length === 0) {
+            topic = 'any subject'
+        }
+
+        const question = `generate a satirical news story about ${topic}, it should be one paragraph and less than 1000 characters`
+
+        const prompts: ChatCompletionMessageParam[] = []
         prompts.push({ role: 'user', content: question })
 
         return this.sendChatCompletionAndReply(message, prompts)
@@ -52,7 +78,7 @@ export default class OpenAIPlugin implements Plugin {
             return message.reply(NO_MESSAGE_ERROR_TEXT)
         }
 
-        const prompts: CreateChatCompletionRequestMessage[] = []
+        const prompts: ChatCompletionMessageParam[] = []
         const messages = await message.channel.messages.fetch({ before: message.id, limit: 9 })
 
         messages.reverse().forEach(m => {
@@ -81,7 +107,7 @@ export default class OpenAIPlugin implements Plugin {
         return this.sendChatCompletionAndReply(message, prompts, 'Answer: ')
     }
 
-    protected async sendChatCompletionAndReply(message: Message, prompts: CreateChatCompletionRequestMessage[], prefix: string = '') {
+    protected async sendChatCompletionAndReply(message: Message, prompts: ChatCompletionMessageParam[], prefix: string = '') {
         const reply = message.reply(`:thinking: ${message.client.user.username} is thinking ...`)
         let text: string
 
