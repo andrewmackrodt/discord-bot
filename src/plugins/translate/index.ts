@@ -66,7 +66,9 @@ export default class TranslatePlugin {
                 return sendErrorReply(message, 'either specify the text to translate or use .translate as a message reply')
             }
             reference = await message.fetchReference()
-            sourceText = reference.content.trim()
+            // remove quoted replies from the reference message
+            sourceText = reference.content
+                .replace(/^:speech_balloon:.+\n+(?:(?:>|<@[0-9]+).*\n+)*/m, '').trim()
         } else {
             sourceText = text.trim()
         }
