@@ -39,6 +39,8 @@ export class SongOfTheDayRepository {
         serverId: string,
         user: User,
         track:  SpotifyApi.SingleTrackResponse,
+        messageId?: string,
+        playcount?: number,
     ): Promise<Song> {
         const song = new Song()
         song.serverId = serverId
@@ -48,6 +50,15 @@ export class SongOfTheDayRepository {
         song.date = getYmd()
         song.userId = user.id
         song.user = user
+
+        if (typeof messageId === 'string') {
+            song.messageId = messageId
+        }
+
+        if (typeof playcount === 'number') {
+            song.playcount = playcount
+            song.playcountUpdatedAt = new Date()
+        }
 
         return await song.save()
     }

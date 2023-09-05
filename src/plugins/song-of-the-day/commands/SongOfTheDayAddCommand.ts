@@ -8,12 +8,14 @@ import { extractTrackId } from '../helpers'
 import type { Song } from '../models/Song'
 import { SongOfTheDayRepository } from '../repositories/SongOfTheDayRepository'
 import { SpotifyService } from '../services/SpotifyService'
+import { SpotifyWebPlayerApi } from '../services/SpotifyWebPlayerApi'
 
 @injectable()
 export default class SongOfTheDayAddCommand {
     public constructor(
         private readonly repository: SongOfTheDayRepository,
         private readonly spotifyService: SpotifyService,
+        private readonly webPlayerApi: SpotifyWebPlayerApi,
     ) {
     }
 
@@ -50,7 +52,7 @@ export default class SongOfTheDayAddCommand {
 
             // create entry in database
             const user = await this.repository.getOrCreateUser(message.author)
-            const song = await this.addSongOfTheDay(sdk, guildId, trackId, user)
+            const song = await this.addSongOfTheDay(sdk, guildId, trackId, user, message)
 
             // create entry in playlist
             const { body: res } = await sdk.addTracksToPlaylist(playlistId, [
@@ -67,9 +69,24 @@ export default class SongOfTheDayAddCommand {
         }
     }
 
-    protected async addSongOfTheDay(spotify: SpotifyWebApi, serverId: string, trackId: string, user: User): Promise<Song> {
+    protected async addSongOfTheDay(
+        spotify: SpotifyWebApi,
+        serverId: string,
+        trackId: string,
+        user: User,
+        message: Message,
+    ): Promise<Song> {
         const { body: track } = await spotify.getTrack(trackId)
-
-        return await this.repository.addSongOfTheDay(serverId, user, track)
+        let playcount: number | undefined
+        try {
+            const album = await this.webPlayerApi.getAlbum(track.album.id)
+            const count = album.tracks.items.find(t => t.track.uri.endsWith(`:${trackId}`))?.track.playcount
+            if (typeof count === 'string') {
+                playcount = parseInt(count, 10)
+            }
+        } catch (e) {
+            console.error(e)
+        }
+        return await this.repository.addSongOfTheDay(serverId, user, track, message.id, playcount)
     }
 }
