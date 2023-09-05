@@ -45,6 +45,7 @@ export class SongOfTheDayRepository {
         const song = new Song()
         song.serverId = serverId
         song.trackId = track.id
+        song.albumId = track.album.id
         song.artist = track.artists[0].name
         song.title = track.name
         song.date = getYmd()

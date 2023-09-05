@@ -41,6 +41,9 @@ export class Song extends BaseEntity {
     @UpdateDateColumn({ name: 'updated_at' })
     public updatedAt!: Date
 
+    @Column({ name: 'album_id', nullable: true })
+    public albumId?: string
+
     @ManyToOne(() => User, user => user.songs, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id', foreignKeyConstraintName: 'songs_user_id_users_id_fkey' })
     public user?: Relation<User>
