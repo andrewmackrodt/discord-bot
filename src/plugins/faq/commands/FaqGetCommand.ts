@@ -1,3 +1,4 @@
+import type { APIEmbed } from 'discord.js'
 import { Message } from 'discord.js'
 import { injectable } from 'tsyringe'
 import { command } from '../../../utils/command'
@@ -28,7 +29,15 @@ export default class FaqGetCommand {
             return message.reply(error(`faq not found: **${name}**`))
         }
 
-        let content = faq.content
+        const embeds: APIEmbed[] = []
+        let content = faq.content.trim()
+        let match: RegExpMatchArray | null = null
+
+        while ((match = content.match(/https?:\/\/[^ ]+\.(?:jpe?g|gif|png)$/i)) !== null) {
+            content = content.substring(0, content.length - match[0].length).trim()
+            embeds.unshift({ image: { url: match[0] } })
+        }
+
         let recipientId: string | undefined
 
         if (recipient) {
@@ -40,6 +49,6 @@ export default class FaqGetCommand {
             content = `<@${recipientId}> ${content}`
         }
 
-        return message.reply(content)
+        return message.reply({ content, embeds })
     }
 }
