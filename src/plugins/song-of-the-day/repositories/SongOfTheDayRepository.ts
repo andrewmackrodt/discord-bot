@@ -16,6 +16,7 @@ interface ServerHistoryParams {
 interface ServerHistoryRow {
     artist: string
     title: string
+    author_id: string
     author: string
     date: string
     track_id: string
@@ -23,6 +24,7 @@ interface ServerHistoryRow {
 
 interface ServerNominationHistoryRow {
     date: string
+    user_id: string
     username: string
 }
 
@@ -79,8 +81,8 @@ export class SongOfTheDayRepository {
 
     public async getServerHistory(params: ServerHistoryParams): Promise<ServerHistoryRow[]> {
         let query = Song.createQueryBuilder('songs')
-            .innerJoin('songs.user', 'users')
-            .select(['artist', 'title', 'users.name as author', 'date', 'track_id'])
+            .leftJoin('songs.user', 'users')
+            .select(['artist', 'title', 'user_id as author_id', 'users.name as author', 'date', 'track_id'])
             .where({ serverId: params.serverId })
             .orderBy('songs.id', 'DESC')
             .limit(params.limit).offset(params.offset)
@@ -94,8 +96,8 @@ export class SongOfTheDayRepository {
 
     public async getServerNominationHistory(params: ServerHistoryParams): Promise<ServerNominationHistoryRow[]> {
         let query = SongOfTheDayNomination.createQueryBuilder('nominations')
-            .innerJoin('nominations.user', 'users')
-            .select(['date', 'users.name as username'])
+            .leftJoin('nominations.user', 'users')
+            .select(['date', 'user_id', 'users.name as username'])
             .where({ serverId: params.serverId })
             .orderBy('date', 'DESC')
             .orderBy('nominations.id', 'DESC')

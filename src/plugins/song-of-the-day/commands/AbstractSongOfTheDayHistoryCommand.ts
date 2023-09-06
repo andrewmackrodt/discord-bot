@@ -1,4 +1,4 @@
-import type { MessageCreateOptions, MessageEditOptions, Interaction, Message } from 'discord.js'
+import type { MessageCreateOptions, MessageEditOptions, Interaction, Message, TextChannel } from 'discord.js'
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js'
 import { error, lookupUserId } from '../../../utils/plugin'
 import type { PaginatedOptionalUserQuery } from '../helpers'
@@ -9,7 +9,7 @@ export abstract class AbstractSongOfTheDayHistoryCommand {
     protected abstract get nextInteractionCustomId(): string
     protected abstract get prevInteractionCustomId(): string
 
-    protected abstract getMessageEmbeds(guildId: string, options?: PaginatedOptionalUserQuery): Promise<Pick<MessageEditOptions, 'embeds'> | undefined>
+    protected abstract getMessageEmbeds(channel: TextChannel, options?: PaginatedOptionalUserQuery): Promise<Pick<MessageEditOptions, 'embeds'> | undefined>
 
     protected constructor(
         protected readonly repository: SongOfTheDayRepository,
@@ -27,7 +27,7 @@ export abstract class AbstractSongOfTheDayHistoryCommand {
             }
         }
 
-        const embed = await this.getMessageEmbeds(message.guild!.id, options) as MessageCreateOptions
+        const embed = await this.getMessageEmbeds(message.channel as TextChannel, options) as MessageCreateOptions
 
         if ( ! embed) {
             return message.channel.send('history is empty')
@@ -80,7 +80,7 @@ export abstract class AbstractSongOfTheDayHistoryCommand {
         }
 
         const options: PaginatedOptionalUserQuery = { page, userId }
-        const reply = await this.getMessageEmbeds(interaction.message.guild.id, options)
+        const reply = await this.getMessageEmbeds(interaction.channel as TextChannel, options)
 
         if (reply) {
             await interaction.message.edit(reply)

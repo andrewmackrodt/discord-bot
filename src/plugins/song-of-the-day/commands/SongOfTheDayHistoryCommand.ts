@@ -1,4 +1,4 @@
-import type { MessageEditOptions } from 'discord.js'
+import type { MessageEditOptions, TextChannel } from 'discord.js'
 import { Interaction, Message } from 'discord.js'
 import { injectable } from 'tsyringe'
 import { AbstractSongOfTheDayHistoryCommand } from './AbstractSongOfTheDayHistoryCommand'
@@ -42,14 +42,14 @@ export default class SongOfTheDayHistoryCommand extends AbstractSongOfTheDayHist
     }
 
     protected async getMessageEmbeds(
-        serverId: string,
+        channel: TextChannel,
         options?: PaginatedOptionalUserQuery,
     ): Promise<Pick<MessageEditOptions, 'embeds'> | undefined> {
         const page = options?.page ?? 1
         const offset = (page - 1) * DEFAULT_LIMIT
 
         const rows = await this.repository.getServerHistory({
-            serverId,
+            serverId: channel.guildId,
             userId: options?.userId,
             limit: DEFAULT_LIMIT,
             offset,
@@ -77,7 +77,8 @@ export default class SongOfTheDayHistoryCommand extends AbstractSongOfTheDayHist
                         inline: true,
                     },
                     {
-                        name: `added by ${row.author}`,
+                        name: 'added by ' +
+                            ((row.author_id ? channel.members.get(row.author_id)?.displayName : undefined) ?? row.author),
                         value: `on ${row.date}`,
                         inline: true,
                     },

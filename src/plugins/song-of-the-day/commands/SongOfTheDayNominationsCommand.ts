@@ -1,4 +1,4 @@
-import type { MessageEditOptions } from 'discord.js'
+import type { MessageEditOptions, TextChannel } from 'discord.js'
 import { Interaction, Message } from 'discord.js'
 import { injectable } from 'tsyringe'
 import { AbstractSongOfTheDayHistoryCommand } from './AbstractSongOfTheDayHistoryCommand'
@@ -42,14 +42,14 @@ export default class SongOfTheDayNominationsCommand extends AbstractSongOfTheDay
     }
 
     protected async getMessageEmbeds(
-        serverId: string,
+        channel: TextChannel,
         options?: PaginatedOptionalUserQuery,
     ): Promise<Pick<MessageEditOptions, 'embeds'> | undefined> {
         const page = options?.page ?? 1
         const offset = (page - 1) * DEFAULT_LIMIT
 
         const rows = await this.repository.getServerNominationHistory({
-            serverId,
+            serverId: channel.guildId,
             userId: options?.userId,
             limit: DEFAULT_LIMIT,
             offset,
@@ -78,7 +78,7 @@ export default class SongOfTheDayNominationsCommand extends AbstractSongOfTheDay
                     },
                     {
                         name: 'username',
-                        value: row.username,
+                        value: (row.user_id ? channel.members.get(row.user_id)?.displayName : undefined) ?? row.username,
                         inline: true,
                     },
                 ])).flat(),
