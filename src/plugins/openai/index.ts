@@ -36,30 +36,41 @@ export default class OpenAIPlugin implements Plugin {
         return this.sendChatCompletionAndReply(message, prompts)
     }
 
+    @command('haiku', {
+        emoji: ':notepad_spiral:',
+        title: 'Haiku',
+        description: 'Generate a haiku.',
+        separator: null,
+        args: { topic: {} },
+    })
+    public async haiku(message: Message, topic?: string) {
+        return this.sendTopicResponse(message,
+            'generate a haiku about {{ topic }}, it should be less than 1000 characters', topic)
+    }
+
     @command('news', {
         emoji: ':onion:',
         title: 'Fake News',
         description: 'Generate a satirical news story.',
-        lastArgIsText: true,
-        args: {
-            topic: {},
-        },
+        separator: null,
+        args: { topic: {} },
     })
     public async news(message: Message, topic?: string) {
-        if ( ! this.isSupported) {
-            return message.reply(CONFIG_ERROR_TEXT)
-        }
+        return this.sendTopicResponse(message,
+            'generate a satirical news story about {{ topic }}, it should be one paragraph and less than 1000 characters',
+            topic)
+    }
 
-        if ( ! topic || (topic = topic.trim()).length === 0) {
-            topic = 'any subject'
-        }
-
-        const question = `generate a satirical news story about ${topic}, it should be one paragraph and less than 1000 characters`
-
-        const prompts: ChatCompletionMessageParam[] = []
-        prompts.push({ role: 'user', content: question })
-
-        return this.sendChatCompletionAndReply(message, prompts)
+    @command('poem', {
+        emoji: ':notepad_spiral:',
+        title: 'Poem',
+        description: 'Generate a poem.',
+        separator: null,
+        args: { topic: {} },
+    })
+    public async poem(message: Message, topic?: string) {
+        return this.sendTopicResponse(message,
+            'generate a poem about {{ topic }}, it should be less than 1000 characters', topic)
     }
 
     public async onMessage(message: Message, next: NextFunction): Promise<any> {
@@ -129,6 +140,23 @@ export default class OpenAIPlugin implements Plugin {
         }
 
         return reply.then(reply => reply.edit(text))
+    }
+
+    protected async sendTopicResponse(message: Message, prompt: string, topic?: string) {
+        if ( ! this.isSupported) {
+            return message.reply(CONFIG_ERROR_TEXT)
+        }
+
+        if ( ! topic || (topic = topic.trim()).length === 0) {
+            topic = 'any subject'
+        }
+
+        const question = prompt.replaceAll('{{ topic }}', topic)
+
+        const prompts: ChatCompletionMessageParam[] = []
+        prompts.push({ role: 'user', content: question })
+
+        return this.sendChatCompletionAndReply(message, prompts)
     }
 
     protected get isSupported(): boolean {
