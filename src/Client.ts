@@ -81,6 +81,7 @@ export class Client {
         for (const plugin of this.plugins) {
             this.doCommandRegistration(plugin)
             this.doInteractionRegistration(plugin)
+            this.doExtensionRegistration(plugin)
         }
 
         // assign handler functions
@@ -313,5 +314,16 @@ export class Client {
 
         // proceed to register interactions added using decorators
         registerInteractionsFromDecorators(this.interactionRegistry, plugin)
+    }
+
+    private doExtensionRegistration(plugin: Plugin) {
+        if ( ! plugin.getExtensions) {
+            return
+        }
+
+        for (const obj of plugin.getExtensions()) {
+            registerCommandsFromDecorators(this.commandRegistry, obj)
+            registerInteractionsFromDecorators(this.interactionRegistry, obj)
+        }
     }
 }

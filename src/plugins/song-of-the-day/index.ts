@@ -9,11 +9,8 @@ import SongOfTheDayStatsCommand from './commands/SongOfTheDayStatsCommand'
 import { SongOfTheDayNotificationService } from './services/SongOfTheDayNotificationService'
 import type { Plugin } from '../../../types/plugins'
 import type { CommandRegistry } from '../../registries/CommandRegistry'
-import type { InteractionRegistry } from '../../registries/InteractionRegistry'
 import type { Schedule } from '../../Schedule'
-import { registerCommandsFromDecorators } from '../../utils/command'
 import { isWorkingDay } from '../../utils/date'
-import { registerInteractionsFromDecorators } from '../../utils/interaction'
 
 @injectable()
 export default class SongOfTheDayPlugin implements Plugin {
@@ -28,8 +25,15 @@ export default class SongOfTheDayPlugin implements Plugin {
     ) {
     }
 
-    protected get commands() {
-        return [this.add, this.history, this.info, this.nominations, this.random, this.stats]
+    public getExtensions() {
+        return [
+            this.add,
+            this.history,
+            this.info,
+            this.nominations,
+            this.random,
+            this.stats,
+        ]
     }
 
     public doCommandRegistration(registry: CommandRegistry) {
@@ -38,12 +42,6 @@ export default class SongOfTheDayPlugin implements Plugin {
             .setTitle('Song of the Day')
             .setDescription('Song of the Day plugin.')
             .build())
-
-        this.commands.forEach(instance => registerCommandsFromDecorators(registry, instance))
-    }
-
-    public doInteractionRegistration(registry: InteractionRegistry) {
-        this.commands.forEach(instance => registerInteractionsFromDecorators(registry, instance))
     }
 
     public registerScheduler(client: Discord.Client, schedule: Schedule) {

@@ -26,6 +26,7 @@ export type RegisterScheduleHandler = (client: Client, scheduler: Schedule) => v
 export interface Plugin {
     doCommandRegistration?: RegisterCommandsHandler
     doInteractionRegistration?: RegisterInteractionsHandler
+    getExtensions?: () => object[]
     onConnect?: ConnectHandler
     onMessage?: MessageHandler
     onMessageReactionAdd?: ReactionHandler

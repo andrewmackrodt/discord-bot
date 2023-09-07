@@ -5,7 +5,6 @@ import FaqGetCommand from './commands/FaqGetCommand'
 import FaqListCommand from './commands/FaqListCommand'
 import type { Plugin } from '../../../types/plugins'
 import type { CommandRegistry } from '../../registries/CommandRegistry'
-import { registerCommandsFromDecorators } from '../../utils/command'
 
 @injectable()
 export default class FaqPlugin implements Plugin {
@@ -17,8 +16,13 @@ export default class FaqPlugin implements Plugin {
     ) {
     }
 
-    protected get commands() {
-        return [this.faqAddCommand, this.faqGetCommand, this.faListCommand, this.faqDelCommand]
+    public getExtensions() {
+        return [
+            this.faqAddCommand,
+            this.faqGetCommand,
+            this.faListCommand,
+            this.faqDelCommand,
+        ]
     }
 
     public doCommandRegistration(registry: CommandRegistry) {
@@ -29,7 +33,5 @@ export default class FaqPlugin implements Plugin {
             .setArgs({ name: { required: true }, recipient: {} })
             .setHandler((message, name, recipient) => this.faqGetCommand.getFaq(message, name, recipient))
             .build())
-
-        this.commands.forEach(instance => registerCommandsFromDecorators(registry, instance))
     }
 }
