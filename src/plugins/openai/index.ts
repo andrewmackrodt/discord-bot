@@ -1,6 +1,7 @@
 import type { Message } from 'discord.js'
 import { injectable } from 'tsyringe'
 import AskCommand from './commands/AskCommand'
+import CyaCommand from './commands/CyaCommand'
 import HaikuCommand from './commands/HaikuCommand'
 import NewsCommand from './commands/NewsCommand'
 import PoemCommand from './commands/PoemCommand'
@@ -11,6 +12,7 @@ import type { NextFunction, Plugin } from '../../../types/plugins'
 export default class OpenAIPlugin implements Plugin {
     public constructor(
         private readonly askCommand: AskCommand,
+        private readonly cyaCommand: CyaCommand,
         private readonly haikuCommand: HaikuCommand,
         private readonly newsCommand: NewsCommand,
         private readonly poemCommand: PoemCommand,
@@ -21,6 +23,7 @@ export default class OpenAIPlugin implements Plugin {
     public getExtensions() {
         return [
             this.askCommand,
+            this.cyaCommand,
             this.haikuCommand,
             this.newsCommand,
             this.poemCommand,

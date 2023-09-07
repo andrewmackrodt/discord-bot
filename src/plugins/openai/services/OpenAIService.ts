@@ -7,6 +7,11 @@ import { error } from '../../../utils/plugin'
 
 const CONFIG_ERROR_TEXT = 'the openai plugin is not correctly configured, please contact the server admin'
 
+interface ReplyContent {
+    reply: Promise<Message>
+    content: string
+}
+
 @component()
 export class OpenAIService {
     private _isSupported?: boolean
@@ -20,10 +25,16 @@ export class OpenAIService {
         return this._isSupported
     }
 
-    public async sendChatCompletionAndReply(message: Message, prompts: ChatCompletionMessageParam[], prefix: string = '') {
+    public async getChatCompletionAndStartReply(
+        message: Message,
+        prompts: ChatCompletionMessageParam[],
+        reply?: Promise<Message>,
+    ): Promise<ReplyContent | undefined> {
         const sdk = this.getSdk()
-        const reply = message.reply(`:thinking: ${message.client.user.username} is thinking ...`)
-        let text: string
+
+        const foo = reply
+            ? Promise.resolve(reply)
+            : message.reply(`:thinking: ${message.client.user.username} is thinking ...`)
 
         try {
             const res = await sdk.chat.completions.create({
@@ -36,13 +47,26 @@ export class OpenAIService {
             })
 
             console.info('openai: usage', res.usage)
-            text = prefix + res.choices.map(choice => choice.message.content?.trim()).join(' ')
+            const content = res.choices.map(choice => choice.message.content?.trim()).join(' ')
+            return { reply: foo, content }
         } catch (e) {
             console.error('openai: error', e)
-            text = error('an error occurred please try again later')
+            const content = error('an error occurred please try again later')
+            foo.then(reply => reply.edit(content))
         }
+    }
 
-        return reply.then(reply => reply.edit(text))
+    public async sendChatCompletionAndReply(
+        message: Message,
+        prompts: ChatCompletionMessageParam[],
+        prefix = '',
+    ) {
+        const res = await this.getChatCompletionAndStartReply(message, prompts)
+        if ( ! res) {
+            return
+        }
+        const { reply, content } = res
+        return reply.then(reply => reply.edit(prefix + content))
     }
 
     public getSdk(): OpenAI {
