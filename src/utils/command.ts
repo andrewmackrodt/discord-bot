@@ -25,6 +25,9 @@ export class CommandUsageError extends Error {
     }
 }
 
+export class ConfigurationError extends Error {
+}
+
 const registered: Record<string, DecoratorRegistration[]> = {}
 
 export function command(command: string, options?: DecoratorOptions) {

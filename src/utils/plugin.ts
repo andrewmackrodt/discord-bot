@@ -11,11 +11,11 @@ export function sendErrorToChannel(message: Message, text: string): Promise<any>
 }
 
 export function sendGenericErrorReply(message: Message): Promise<any> {
-    return message.reply(error('an unknown error has occurred'))
+    return sendErrorReply(message, 'an unknown error has occurred')
 }
 
 export function sendGenericErrorToChannel(message: Message): Promise<any> {
-    return message.channel.send(error('an unknown error has occurred'))
+    return sendErrorToChannel(message, 'an unknown error has occurred')
 }
 
 export function error(text: string): string {

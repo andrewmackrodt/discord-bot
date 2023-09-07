@@ -5,9 +5,9 @@ import type { Command } from './registries/Command'
 import { CommandRegistry } from './registries/CommandRegistry'
 import { InteractionRegistry } from './registries/InteractionRegistry'
 import { Schedule } from './Schedule'
-import { CommandUsageError, registerCommandsFromDecorators } from './utils/command'
+import { CommandUsageError, ConfigurationError, registerCommandsFromDecorators } from './utils/command'
 import { registerInteractionsFromDecorators } from './utils/interaction'
-import { replyWithCommandHelp } from './utils/plugin'
+import { replyWithCommandHelp, sendErrorReply } from './utils/plugin'
 import { split } from './utils/string'
 import type { NextFunction, Plugin } from '../types/plugins'
 
@@ -243,11 +243,16 @@ export class Client {
         try {
             await command.execute(message, args)
         } catch (e) {
-            if ( ! (e instanceof CommandUsageError)) {
+            if (e instanceof CommandUsageError) {
+                void replyWithCommandHelp(message, command, e.message)
+            }
+            else if (e instanceof ConfigurationError) {
+                const text = e.message || 'the command failed due to a configuration error'
+                void sendErrorReply(message, text)
+            }
+            else {
                 throw e
             }
-
-            void replyWithCommandHelp(message, command, e.message)
         }
 
         return true
