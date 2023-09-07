@@ -20,6 +20,9 @@ interface ServerHistoryRow {
     author: string
     date: string
     track_id: string
+    release_date: string | null
+    playcount: number | null
+    playcount_updated_at: string | null
 }
 
 interface ServerNominationHistoryRow {
@@ -83,7 +86,17 @@ export class SongOfTheDayRepository {
     public async getServerHistory(params: ServerHistoryParams): Promise<ServerHistoryRow[]> {
         let query = Song.createQueryBuilder('songs')
             .leftJoin('songs.user', 'users')
-            .select(['artist', 'title', 'user_id as author_id', 'users.name as author', 'date', 'track_id'])
+            .select([
+                'artist',
+                'title',
+                'user_id as author_id',
+                'users.name as author',
+                'date',
+                'track_id',
+                'release_date',
+                'playcount',
+                'playcount_updated_at',
+            ])
             .where({ serverId: params.serverId })
             .orderBy('songs.id', 'DESC')
             .limit(params.limit).offset(params.offset)

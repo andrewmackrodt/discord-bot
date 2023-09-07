@@ -3,6 +3,7 @@ import { Interaction, Message } from 'discord.js'
 import { injectable } from 'tsyringe'
 import { AbstractSongOfTheDayHistoryCommand } from './AbstractSongOfTheDayHistoryCommand'
 import { command } from '../../../utils/command'
+import { getDaysBetween } from '../../../utils/date'
 import { interaction } from '../../../utils/interaction'
 import type { PaginatedOptionalUserQuery } from '../helpers'
 import { SongOfTheDayRepository } from '../repositories/SongOfTheDayRepository'
@@ -65,24 +66,55 @@ export default class SongOfTheDayHistoryCommand extends AbstractSongOfTheDayHist
             embeds: [{
                 title: ':notepad_spiral: **Song of the Day History**',
                 description: JSON.stringify(options).replace(/["{}]/g, '').replace(/:/g, ': ').replace(/,/g, ' | '),
-                fields: rows.map((row, i) => ([
-                    {
-                        name: '#',
-                        value: (index + i).toString(10),
-                        inline: true,
-                    },
-                    {
-                        name: `${row.artist} - ${row.title}`,
-                        value: `https://open.spotify.com/track/${row.track_id}`,
-                        inline: true,
-                    },
-                    {
-                        name: 'added by ' +
-                            ((row.author_id ? channel.members.get(row.author_id)?.displayName : undefined) ?? row.author),
-                        value: `on ${row.date}`,
-                        inline: true,
-                    },
-                ])).flat(),
+                fields: rows.map((row, i) => {
+                    const author = (
+                        row.author_id
+                            ? channel.members.get(row.author_id)?.displayName
+                            : undefined
+                        )
+                        ?? row.author
+
+                    let playcountIsEstimate = false
+                    let playcount = row.playcount
+
+                    if (row.playcount && row.playcount_updated_at && row.release_date) {
+                        const playCountUpdatedDate = row.playcount_updated_at.split(' ')[0]
+                        const daysBetweenRelease = getDaysBetween(playCountUpdatedDate, row.release_date)
+                        const ppd = row.playcount / daysBetweenRelease
+                        const daysBetweenAdded = getDaysBetween(playCountUpdatedDate, row.date)
+                        const delta = Math.round(ppd * daysBetweenAdded)
+                        playcountIsEstimate = delta !== 0
+                        playcount = row.playcount - delta
+                    }
+
+                    let playcountStr = ''
+
+                    if (playcount) {
+                        playcountStr = playcount.toLocaleString()
+                        if (playcountIsEstimate) {
+                            playcountStr = '~' + playcountStr
+                        }
+                        playcountStr = ` (${playcountStr} plays)`
+                    }
+
+                    return [
+                        {
+                            name: '#',
+                            value: (index + i).toString(10),
+                            inline: true,
+                        },
+                        {
+                            name: `${row.artist} - ${row.title}${playcountStr}`,
+                            value: `https://open.spotify.com/track/${row.track_id}`,
+                            inline: true,
+                        },
+                        {
+                            name: `added by ${author}`,
+                            value: `on ${row.date}`,
+                            inline: true,
+                        },
+                    ]
+                }).flat(),
             }],
         }
     }
