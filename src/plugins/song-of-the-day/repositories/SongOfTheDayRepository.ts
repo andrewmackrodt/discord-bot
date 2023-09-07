@@ -53,6 +53,7 @@ export class SongOfTheDayRepository {
         song.date = getYmd()
         song.userId = user.id
         song.user = user
+        song.releaseDate = track.album.release_date.split('T')[0]
 
         if (typeof messageId === 'string') {
             song.messageId = messageId

@@ -20,7 +20,7 @@ export class Song extends BaseEntity {
     @Column()
     public title!: string
 
-    @Column()
+    @Column({ type: 'date' })
     public date!: string
 
     @Column({ name: 'user_id' })
@@ -43,6 +43,9 @@ export class Song extends BaseEntity {
 
     @Column({ name: 'album_id', nullable: true })
     public albumId?: string
+
+    @Column({ name: 'release_date', type: 'date', nullable: true })
+    public releaseDate?: string
 
     @ManyToOne(() => User, user => user.songs, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id', foreignKeyConstraintName: 'songs_user_id_users_id_fkey' })
