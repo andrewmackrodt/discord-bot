@@ -1,6 +1,7 @@
 import type Discord from 'discord.js'
 import { injectable } from 'tsyringe'
 import SongOfTheDayAddCommand from './commands/SongOfTheDayAddCommand'
+import SongOfTheDayExportCommand from './commands/SongOfTheDayExportCommand'
 import SongOfTheDayHistoryCommand from './commands/SongOfTheDayHistoryCommand'
 import SongOfTheDayInfoCommand from './commands/SongOfTheDayInfoCommand'
 import SongOfTheDayNominationsCommand from './commands/SongOfTheDayNominationsCommand'
@@ -17,6 +18,7 @@ export default class SongOfTheDayPlugin implements Plugin {
     public constructor(
         private readonly notificationService: SongOfTheDayNotificationService,
         private readonly add: SongOfTheDayAddCommand,
+        private readonly exportCommand: SongOfTheDayExportCommand,
         private readonly history: SongOfTheDayHistoryCommand,
         private readonly info: SongOfTheDayInfoCommand,
         private readonly nominations: SongOfTheDayNominationsCommand,
@@ -28,6 +30,7 @@ export default class SongOfTheDayPlugin implements Plugin {
     public getExtensions() {
         return [
             this.add,
+            this.exportCommand,
             this.history,
             this.info,
             this.nominations,
