@@ -26,7 +26,7 @@ export default class SongOfTheDayNominationsCommand extends AbstractSongOfTheDay
     }
 
     @command('sotd nominations', {
-        description: 'show song of the day nomination history',
+        description: 'Show song of the day nomination history.',
         args: {
             username: {},
         },

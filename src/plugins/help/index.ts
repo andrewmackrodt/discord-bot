@@ -1,11 +1,12 @@
 import type { APIEmbedField, MessageCreateOptions } from 'discord.js'
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, EmbedBuilder, Message , Interaction } from 'discord.js'
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, EmbedBuilder, Message, Interaction } from 'discord.js'
 import { getFieldName } from './utils'
 import type { Plugin } from '../../../types/plugins'
 import type { Command } from '../../registries/Command'
 import type { CommandRegistry } from '../../registries/CommandRegistry'
 import { command } from '../../utils/command'
 import { interaction } from '../../utils/interaction'
+import { sendErrorToChannel } from '../../utils/plugin'
 import { suppressInteractionReply } from '../song-of-the-day/helpers'
 
 enum Interactions {
@@ -23,13 +24,22 @@ export default class HelpPlugin implements Plugin {
         emoji: ':robot:',
         title: 'Bot Commands',
         description: 'Display help.',
+        args: {
+            command: {},
+        },
     })
-    public async replyHelp(message: Message): Promise<any> {
+    public async sendHelpMessage(message: Message, command?: string): Promise<any> {
+        if (command) {
+            return this.sendCommandHelpMessage(message, command)
+        }
+
         const embed = new EmbedBuilder()
             .setTitle(':robot:  Bot Commands')
             .setDescription(
                 'Commands listed with `<>` require arguments, e.g. `.8ball <question>`. A question mark ' +
-                'indicates that the argument is optional, e.g. `.roll <2d10?>`.\n---')
+                'indicates that the argument is optional, e.g. `.roll <2d10?>`. If the command uses the ' +
+                'syntax `[subcommand]` it requires a subcommand. Use `.help command` for additional usage ' +
+                'instructions, e.g. `.help faq`.\n---')
             .setFields(this.getPageFields())
 
         const options: MessageCreateOptions = { embeds: [embed] }
@@ -97,14 +107,48 @@ export default class HelpPlugin implements Plugin {
         void suppressInteractionReply(interaction)
     }
 
+    protected sendCommandHelpMessage(message: Message, name: string) {
+        const command = this._registry?.get(name)
+
+        if ( ! command) {
+            return sendErrorToChannel(message, `unknown command ${name}`)
+        }
+
+        let title: string
+        if (command.title) {
+            title = command.title
+            title += title[0].match(/^[A-Z]/) ? ' Help' : ' help'
+        } else {
+            title = command.fullCommand + ' help'
+        }
+        if (command.emoji) {
+            title = command.emoji + '  ' + title
+        }
+
+        const subcommands = Object.values(command.subcommands)
+
+        let embedBuilder = new EmbedBuilder()
+            .setTitle(title)
+            .setFields(this.getCommandsFields(subcommands))
+
+        if (command.description) {
+            embedBuilder = embedBuilder.setDescription(command.description)
+        }
+
+        return message.channel.send({ embeds: [embedBuilder] })
+    }
+
+    protected getCommandsFields(commands: Command[]): APIEmbedField[] {
+        return commands.map(command => ({
+            name: getFieldName(command),
+            inline: true,
+            value: command.description?.replace(/[\s.]+$/, '').toLowerCase() ?? 'n/a',
+        }))
+    }
+
     protected getPageFields(page: number = 1): APIEmbedField[] {
         const start = (page - 1) * PAGE_SIZE
-        return this.commands.slice(start, start + PAGE_SIZE)
-            .map(c => ({
-                name: getFieldName(c),
-                inline: true,
-                value: c.description?.replace(/[\s.]+$/, '').toLowerCase() ?? 'n/a',
-            }))
+        return this.getCommandsFields(this.commands.slice(start, start + PAGE_SIZE))
     }
 
     public doCommandRegistration(registry: CommandRegistry) {

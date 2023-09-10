@@ -16,7 +16,7 @@ export default class SongOfTheDayInfoCommand {
     }
 
     @command('sotd info', {
-        description: 'query spotify api for song info',
+        description: 'Query Spotify API for song info.',
         args: {
             trackId: { required: true, example: 'https://open.spotify.com/track/70cI6K8qorn5eOICHkUo95' },
         },

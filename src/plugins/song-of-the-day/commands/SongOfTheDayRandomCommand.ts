@@ -11,7 +11,7 @@ export default class SongOfTheDayRandomCommand {
     }
 
     @command('sotd random', {
-        description: 'fetch a random previously entered song of the day',
+        description: 'Fetch a random historic song of the day.',
     })
     public async random(message: Message): Promise<Message> {
         const song = await this.repository.getRandomServerSong(message.guild!.id)

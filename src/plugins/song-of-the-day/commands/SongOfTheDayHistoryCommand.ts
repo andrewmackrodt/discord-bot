@@ -27,7 +27,7 @@ export default class SongOfTheDayHistoryCommand extends AbstractSongOfTheDayHist
     }
 
     @command('sotd history', {
-        description: 'show song of the day history',
+        description: 'Show song of the day history.',
         args: {
             username: {},
         },

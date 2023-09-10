@@ -12,7 +12,7 @@ export default class SongOfTheDayStatsCommand {
     }
 
     @command('sotd stats', {
-        description: 'display song of the day stats',
+        description: 'Display song of the day stats.',
     })
     public async stats(message: Message): Promise<Message> {
         const rows = await this.repository.getServerStats(message.guild!.id) as Record<string, any>[]

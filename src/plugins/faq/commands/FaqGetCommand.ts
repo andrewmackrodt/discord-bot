@@ -49,6 +49,6 @@ export default class FaqGetCommand {
             content = `<@${recipientId}> ${content}`
         }
 
-        return message.reply({ content, embeds })
+        return message.channel.send({ content, embeds })
     }
 }

@@ -20,7 +20,7 @@ export default class SongOfTheDayAddCommand {
     }
 
     @command('sotd add', {
-        description: 'add a new song of the day',
+        description: 'Add a new song of the day.',
         args: {
             trackId: { required: true, example: 'https://open.spotify.com/track/70cI6K8qorn5eOICHkUo95' },
         },

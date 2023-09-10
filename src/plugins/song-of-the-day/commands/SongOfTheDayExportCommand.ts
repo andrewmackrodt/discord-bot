@@ -9,7 +9,7 @@ const BATCH_LIMIT = 100
 @injectable()
 export default class SongOfTheDayExportCommand {
     @command('sotd export', {
-        description: 'export song of the day data as csv',
+        description: 'Export song of the day data as CSV.',
     })
     public async sendExportCSV(message: Message): Promise<Message> {
         const output: string[] = []
