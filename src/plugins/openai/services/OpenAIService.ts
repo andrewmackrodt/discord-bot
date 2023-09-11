@@ -1,4 +1,5 @@
 import type { Message } from 'discord.js'
+import { AttachmentBuilder } from 'discord.js'
 import { OpenAI } from 'openai'
 import type { ChatCompletionMessageParam } from 'openai/resources/chat'
 import { ConfigurationError } from '../../../utils/command'
@@ -32,7 +33,7 @@ export class OpenAIService {
     ): Promise<ReplyContent | undefined> {
         const sdk = this.getSdk()
 
-        const foo = reply
+        const messageReply = reply
             ? Promise.resolve(reply)
             : message.reply(`:thinking: ${message.client.user.username} is thinking ...`)
 
@@ -44,15 +45,16 @@ export class OpenAIService {
                 frequency_penalty: 0.5,
                 presence_penalty: 0.0,
                 temperature: 0.5,
+                user: message.author.id,
             })
 
             console.info('openai: usage', res.usage)
             const content = res.choices.map(choice => choice.message.content?.trim()).join(' ')
-            return { reply: foo, content }
+            return { reply: messageReply, content }
         } catch (e) {
             console.error('openai: error', e)
             const content = error('an error occurred please try again later')
-            foo.then(reply => reply.edit(content))
+            messageReply.then(reply => reply.edit(content))
         }
     }
 
@@ -67,6 +69,36 @@ export class OpenAIService {
         }
         const { reply, content } = res
         return reply.then(reply => reply.edit(prefix + content))
+    }
+
+    public async sendImageGenerationAndReply(message: Message, description: string) {
+        const sdk = this.getSdk()
+
+        // noinspection ES6MissingAwait
+        const replyPromise = message.reply(`:crayon: ${message.client.user.username} is fetching their crayons ...`)
+
+        try {
+            const res = await sdk.images.generate({
+                n: 1,
+                prompt: description,
+                response_format: 'b64_json',
+                size: '512x512',
+                user: message.author.id,
+            })
+            const content = description.replaceAll('\\', '\\\\').replaceAll('*', '\\*')
+            const imageB64Json = res.data[0].b64_json!
+            replyPromise.then(reply => reply.edit({
+                content: `**${content}**`,
+                files: [
+                    new AttachmentBuilder(Buffer.from(imageB64Json, 'base64'))
+                        .setName('image.png'),
+                ],
+            }))
+        } catch (e) {
+            console.error('openai: error', e)
+            const content = error('an error occurred please try again later')
+            replyPromise.then(reply => reply.edit(content))
+        }
     }
 
     public getSdk(): OpenAI {
