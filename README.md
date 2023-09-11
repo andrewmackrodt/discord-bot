@@ -2,6 +2,20 @@
 
 Node.js Discord Bot.
 
+## Features
+
+- AI chat completion using GPT-4
+- AI image generation using DALL·E
+- Meme creator
+- Translate messages to several languages
+- Weather report
+- ... lot's more fun interactions for your server
+
+Certain features require setting a third-party API key:
+
+- OpenAI (GPT-4 and DALL·E) requires paid [API access](https://platform.openai.com/account/api-keys). Set `OPENAI_API_KEY` in `.env` to enable.
+- DeepL (translation) requires free [API access](https://www.deepl.com/account/summary). Set `DEEPL_AUTH_KEY` in `.env` to enable.
+
 ## Requirements
 
 **Operating System**: 🍏 macOS or 🐧 Linux. 🪟 Windows has only been tested using WSL2.
