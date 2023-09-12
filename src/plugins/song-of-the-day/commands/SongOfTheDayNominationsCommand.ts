@@ -31,7 +31,7 @@ export default class SongOfTheDayNominationsCommand extends AbstractSongOfTheDay
             username: {},
         },
     })
-    public async nominations(message: Message, userId?: string): Promise<Message> {
+    public async nominations(message: Message<true>, userId?: string): Promise<Message> {
         return this.sendInitialHistoryMessage(message, userId)
     }
 

@@ -8,7 +8,7 @@ import { Command } from '../../registries/Command'
 import type { CommandRegistry } from '../../registries/CommandRegistry'
 
 export default class ImageTextPlugin implements Plugin {
-    public async replyWithImage(message: Message, name: string, ...texts: string[]): Promise<any> {
+    public async replyWithImage(message: Message<true>, name: string, ...texts: string[]): Promise<any> {
         try {
             const image = await createImage(name, texts)
             const ext = image.name.split('.').pop()

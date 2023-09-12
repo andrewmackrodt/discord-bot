@@ -19,7 +19,7 @@ export class DrawCommand {
             description: { required: true },
         },
     })
-    public async sendDrawResponse(message: Message, description: string) {
+    public async sendDrawResponse(message: Message<true>, description: string) {
         return this.openai.sendImageGenerationAndReply(message, description)
     }
 }

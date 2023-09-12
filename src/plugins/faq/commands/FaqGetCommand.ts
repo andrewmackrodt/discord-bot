@@ -19,11 +19,7 @@ export default class FaqGetCommand {
             recipient: {},
         },
     })
-    public async getFaq(message: Message, name: string, recipient?: string): Promise<Message> {
-        if ( ! message.guildId) {
-            return sendGenericErrorReply(message)
-        }
-
+    public async getFaq(message: Message<true>, name: string, recipient?: string): Promise<Message> {
         const faq = await this.repository.getFaq(message.guildId, name)
         if ( ! faq) {
             return message.reply(error(`faq not found: **${name}**`))

@@ -19,7 +19,7 @@ export default class HaikuCommand extends AbstractTopicCommand{
         separator: null,
         args: { topic: {} },
     })
-    public async sendHaiku(message: Message, topic?: string) {
+    public async sendHaiku(message: Message<true>, topic?: string) {
         return this.sendTopicResponse(message, template, topic)
     }
 }

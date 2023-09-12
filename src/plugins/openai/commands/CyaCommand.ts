@@ -74,7 +74,7 @@ export default class CyaCommand {
             topic: { required: true },
         },
     })
-    public async createAdventure(message: Message, topic: string) {
+    public async createAdventure(message: Message<true>, topic: string) {
         const userInput = template.replaceAll('{{ topic }}', topic.replace(/\.$/, ''))
         const res = await this.openai.getChatCompletionAndStartReply(message, [
             { role: 'system', content: constraint },
@@ -103,7 +103,7 @@ export default class CyaCommand {
     @interaction(StoryChoiceInteractions.Choice3)
     @interaction(StoryChoiceInteractions.Choice4)
     public async choiceHandler(interaction: Interaction): Promise<void> {
-        if ( ! (interaction instanceof ButtonInteraction) || ! interaction.message.guild) {
+        if ( ! (interaction instanceof ButtonInteraction) || ! interaction.message.inGuild()) {
             return
         }
 

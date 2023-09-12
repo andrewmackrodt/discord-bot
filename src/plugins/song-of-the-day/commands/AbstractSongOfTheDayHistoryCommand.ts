@@ -16,7 +16,7 @@ export abstract class AbstractSongOfTheDayHistoryCommand {
     ) {
     }
 
-    protected async sendInitialHistoryMessage(message: Message, userId?: string): Promise<Message> {
+    protected async sendInitialHistoryMessage(message: Message<true>, userId?: string): Promise<Message> {
         const options: PaginatedOptionalUserQuery = { page: 1 }
 
         if (typeof userId === 'string') {
@@ -53,7 +53,7 @@ export abstract class AbstractSongOfTheDayHistoryCommand {
 
     protected async _changePageInteraction(interaction: Interaction): Promise<void> {
         if ( ! (interaction instanceof ButtonInteraction) ||
-            ! interaction.message.guild
+            ! interaction.message.inGuild()
         ) {
             return
         }

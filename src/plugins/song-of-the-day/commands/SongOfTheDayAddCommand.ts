@@ -25,20 +25,18 @@ export default class SongOfTheDayAddCommand {
             trackId: { required: true, example: 'https://open.spotify.com/track/70cI6K8qorn5eOICHkUo95' },
         },
     })
-    public async add(message: Message, url: string): Promise<Message> {
+    public async add(message: Message<true>, url: string): Promise<Message> {
         const trackId = extractTrackId(url)
 
         if ( ! trackId) {
             throw new CommandUsageError('sotd add', 'trackId is malformed')
         }
 
-        const guildId = message.guild!.id
-
-        if ( ! await this.repository.isUniqueServerTrackId(guildId, trackId)) {
+        if ( ! await this.repository.isUniqueServerTrackId(message.guildId, trackId)) {
             return message.channel.send(error('song of the day must be unique'))
         }
 
-        const spotify = await this.spotifyService.getSdk(guildId)
+        const spotify = await this.spotifyService.getSdk(message.guildId)
 
         if ( ! spotify) {
             return message.channel.send(
@@ -52,7 +50,7 @@ export default class SongOfTheDayAddCommand {
 
             // create entry in database
             const user = await this.repository.getOrCreateUser(message.author)
-            const song = await this.addSongOfTheDay(sdk, guildId, trackId, user, message)
+            const song = await this.addSongOfTheDay(sdk, trackId, user, message)
 
             // create entry in playlist
             const { body: res } = await sdk.addTracksToPlaylist(playlistId, [
@@ -71,10 +69,9 @@ export default class SongOfTheDayAddCommand {
 
     protected async addSongOfTheDay(
         spotify: SpotifyWebApi,
-        serverId: string,
         trackId: string,
         user: User,
-        message: Message,
+        message: Message<true>,
     ): Promise<Song> {
         const { body: track } = await spotify.getTrack(trackId)
         let playcount: number | undefined
@@ -87,6 +84,6 @@ export default class SongOfTheDayAddCommand {
         } catch (e) {
             console.error(e)
         }
-        return await this.repository.addSongOfTheDay(serverId, user, track, message.id, playcount)
+        return await this.repository.addSongOfTheDay(message.guildId, user, track, message.id, playcount)
     }
 }

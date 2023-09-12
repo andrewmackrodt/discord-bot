@@ -1,7 +1,7 @@
 import { Message } from 'discord.js'
 import { injectable } from 'tsyringe'
 import { command } from '../../../utils/command'
-import { error, sendGenericErrorReply, success } from '../../../utils/plugin'
+import { error, success } from '../../../utils/plugin'
 import { FaqRepository } from '../repositories/FaqRepository'
 
 @injectable()
@@ -17,11 +17,7 @@ export default class FaqDeleteCommand {
             name: { required: true },
         },
     })
-    public async delete(message: Message, name: string): Promise<Message> {
-        if ( ! message.guildId) {
-            return sendGenericErrorReply(message)
-        }
-
+    public async delete(message: Message<true>, name: string): Promise<Message> {
         if ( ! message.member?.permissions.has('ManageMessages')) {
             return message.reply(error('you do not have permission to manage faqs on this server'))
         }

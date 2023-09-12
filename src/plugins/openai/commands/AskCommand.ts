@@ -20,7 +20,7 @@ export default class AskCommand {
             question: { required: true },
         },
     })
-    public async ask(message: Message, question: string) {
+    public async ask(message: Message<true>, question: string) {
         const prompts: ChatCompletionMessageParam[] = []
         prompts.push({ role: 'user', content: question })
 

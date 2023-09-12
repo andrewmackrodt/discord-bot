@@ -12,7 +12,7 @@ export default class HugPlugin {
             initiator: {},
         },
     })
-    public async replyHug(message: Message, recipient: string, initiator?: string): Promise<any> {
+    public async replyHug(message: Message<true>, recipient: string, initiator?: string): Promise<any> {
         return this.sendMessage(
             ':people_hugging:', 'hugs', ' while sobbing "I\'m so alone"', message, recipient, initiator)
     }
@@ -26,7 +26,7 @@ export default class HugPlugin {
             initiator: {},
         },
     })
-    public async replySlap(message: Message, recipient: string, initiator?: string): Promise<any> {
+    public async replySlap(message: Message<true>, recipient: string, initiator?: string): Promise<any> {
         return this.sendMessage(
             ':wave:', 'slaps', ' while grinning manically', message, recipient, initiator)
     }
@@ -35,7 +35,7 @@ export default class HugPlugin {
         emoji: string,
         verb: string,
         selfSuffix: string,
-        message: Message,
+        message: Message<true>,
         recipient: string,
         initiator?: string,
     ): Promise<any> {

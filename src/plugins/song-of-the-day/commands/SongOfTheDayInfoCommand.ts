@@ -21,14 +21,14 @@ export default class SongOfTheDayInfoCommand {
             trackId: { required: true, example: 'https://open.spotify.com/track/70cI6K8qorn5eOICHkUo95' },
         },
     })
-    public async info(message: Message, url: string): Promise<Message> {
+    public async info(message: Message<true>, url: string): Promise<Message> {
         const trackId = extractTrackId(url)
 
         if ( ! trackId) {
             throw new CommandUsageError('sotd add', 'trackId is malformed')
         }
 
-        const spotify = await this.spotifyService.getSdk(message.guild!.id)
+        const spotify = await this.spotifyService.getSdk(message.guildId)
 
         if ( ! spotify) {
             return message.channel.send(

@@ -19,7 +19,7 @@ export default class PoemCommand extends AbstractTopicCommand{
         separator: null,
         args: { topic: {} },
     })
-    public async poem(message: Message, topic?: string) {
+    public async poem(message: Message<true>, topic?: string) {
         return this.sendTopicResponse(message, template, topic)
     }
 }

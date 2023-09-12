@@ -27,7 +27,7 @@ enum Animal {
 const baseUrl = 'https://api.sefinek.net/api/v2/random/animal'
 
 export default class AnimalsPlugin implements Plugin {
-    public async replyWithImage(message: Message, animal: Animal): Promise<any> {
+    public async replyWithImage(message: Message<true>, animal: Animal): Promise<any> {
         let data: AnimalResponse
         const url = `${baseUrl}/${animal}`
         try {

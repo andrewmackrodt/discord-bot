@@ -11,7 +11,7 @@ export default class EchoPlugin {
             text: { required: true },
         },
     })
-    public async sendMessageToChannel(message: Message, text: string): Promise<any> {
+    public async sendMessageToChannel(message: Message<true>, text: string): Promise<any> {
         return message.channel.send(text)
     }
 }

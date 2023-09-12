@@ -32,7 +32,7 @@ export default class SongOfTheDayHistoryCommand extends AbstractSongOfTheDayHist
             username: {},
         },
     })
-    public async history(message: Message, userId?: string): Promise<Message> {
+    public async history(message: Message<true>, userId?: string): Promise<Message> {
         return this.sendInitialHistoryMessage(message, userId)
     }
 

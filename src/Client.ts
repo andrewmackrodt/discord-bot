@@ -164,7 +164,7 @@ export class Client {
     }
 
     protected onMessage = async (message: Message): Promise<void> => {
-        if (message.author.bot || ! message.guild) {
+        if (message.author.bot || ! message.inGuild()) {
             return
         }
 
@@ -182,7 +182,7 @@ export class Client {
         return this.dispatch('onMessage', [message])
     }
 
-    protected tryHandleCommand = async (message: Message): Promise<boolean> => {
+    protected tryHandleCommand = async (message: Message<true>): Promise<boolean> => {
         const match = message.content.match(/^[#!.-]([a-z0-9][a-z0-9_-]+)\b/i)
 
         if ( ! match) {
@@ -263,7 +263,7 @@ export class Client {
         reaction: MessageReaction | PartialMessageReaction,
         user: User | PartialUser,
     ): Promise<void> => {
-        if (user.bot || ! reaction.message.guild) {
+        if (user.bot || ! reaction.message.inGuild()) {
             return
         }
 
@@ -274,7 +274,7 @@ export class Client {
         reaction: MessageReaction | PartialMessageReaction,
         user: User | PartialUser,
     ): Promise<void> => {
-        if (user.bot || ! reaction.message.guild) {
+        if (user.bot || ! reaction.message.inGuild()) {
             return
         }
 
@@ -282,7 +282,7 @@ export class Client {
     }
 
     protected onInteraction = async (interaction: Interaction): Promise<void> => {
-        if (interaction.user.bot || ! interaction.guild) {
+        if (interaction.user.bot || ! interaction.inGuild()) {
             return
         }
 

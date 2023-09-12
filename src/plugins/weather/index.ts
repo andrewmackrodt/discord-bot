@@ -91,7 +91,7 @@ export default class WeatherPlugin {
             location: { required: true },
         },
     })
-    public async replyWeather(message: Message, location: string): Promise<any> {
+    public async replyWeather(message: Message<true>, location: string): Promise<any> {
         try {
             const geocode = await this.searchGeocode(location)
             if ( ! geocode) {

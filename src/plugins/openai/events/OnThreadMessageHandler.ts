@@ -11,7 +11,7 @@ export class OnThreadMessageHandler implements Plugin {
     ) {
     }
 
-    public async onMessage(message: Message, next: NextFunction): Promise<any> {
+    public async onMessage(message: Message<true>, next: NextFunction): Promise<any> {
         const isConversationThread = message.channel.isThread() && Boolean(message.channel.name.match(/^(?:ask|chat)-?gpt\b/i))
 
         if ( ! isConversationThread) {

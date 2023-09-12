@@ -18,7 +18,7 @@ export default class XkcdPlugin {
             id: {},
         },
     })
-    public async replyComic(message: Message, id?: string): Promise<any> {
+    public async replyComic(message: Message<true>, id?: string): Promise<any> {
         let getComicURL: string
 
         if (typeof id === 'string') {

@@ -27,7 +27,7 @@ export default class HiLoPlugin {
         title: 'Hi-Lo',
         description: 'Guess if the next number is higher or lower.',
     })
-    public async createHiLo(message: Message): Promise<any> {
+    public async createHiLo(message: Message<true>): Promise<any> {
         return message.channel.send(this.getNewGameMessage())
     }
 
@@ -35,7 +35,7 @@ export default class HiLoPlugin {
     @interaction(Interactions.Lo)
     public async hiLoInteraction(interaction: Interaction): Promise<void> {
         if ( ! (interaction instanceof ButtonInteraction) ||
-            ! interaction.message.guild
+            ! interaction.message.inGuild()
         ) {
             return
         }
@@ -94,7 +94,7 @@ export default class HiLoPlugin {
     @interaction(Interactions.Restart)
     public async restartInteraction(interaction: Interaction): Promise<void> {
         if ( ! (interaction instanceof ButtonInteraction) ||
-            ! interaction.message.guild
+            ! interaction.message.inGuild()
         ) {
             return
         }

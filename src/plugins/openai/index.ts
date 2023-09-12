@@ -33,7 +33,7 @@ export default class OpenAIPlugin implements Plugin {
         ]
     }
 
-    public onMessage(message: Message, next: NextFunction) {
+    public onMessage(message: Message<true>, next: NextFunction) {
         return this.onThreadMessageHandler.onMessage(message, next)
     }
 }

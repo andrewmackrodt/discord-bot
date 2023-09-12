@@ -14,8 +14,8 @@ export default class SongOfTheDayStatsCommand {
     @command('sotd stats', {
         description: 'Display song of the day stats.',
     })
-    public async stats(message: Message): Promise<Message> {
-        const rows = await this.repository.getServerStats(message.guild!.id) as Record<string, any>[]
+    public async stats(message: Message<true>): Promise<Message> {
+        const rows = await this.repository.getServerStats(message.guildId) as Record<string, any>[]
 
         const markdown = toMarkdownTable(rows)
 

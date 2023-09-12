@@ -11,7 +11,7 @@ export default class SongOfTheDayExportCommand {
     @command('sotd export', {
         description: 'Export song of the day data as CSV.',
     })
-    public async sendExportCSV(message: Message): Promise<Message> {
+    public async sendExportCSV(message: Message<true>): Promise<Message> {
         const output: string[] = []
         output.push('"' + [
             'id',

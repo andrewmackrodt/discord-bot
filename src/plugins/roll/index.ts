@@ -10,7 +10,7 @@ export default class RollPlugin {
             input: { example: '2d10' },
         },
     })
-    public async replyRoll(message: Message, input?: string): Promise<any> {
+    public async replyRoll(message: Message<true>, input?: string): Promise<any> {
         let count: number, sides: number
         if (input) {
             const args = input.split('d').map(s => parseInt(s))

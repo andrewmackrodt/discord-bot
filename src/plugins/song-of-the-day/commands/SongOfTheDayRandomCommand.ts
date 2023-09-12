@@ -13,8 +13,8 @@ export default class SongOfTheDayRandomCommand {
     @command('sotd random', {
         description: 'Fetch a random historic song of the day.',
     })
-    public async random(message: Message): Promise<Message> {
-        const song = await this.repository.getRandomServerSong(message.guild!.id)
+    public async random(message: Message<true>): Promise<Message> {
+        const song = await this.repository.getRandomServerSong(message.guildId)
 
         if ( ! song) {
             return message.channel.send('the song of the day data is empty, try adding a new song')

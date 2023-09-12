@@ -14,11 +14,7 @@ export default class FaqListCommand {
     @command('faq list', {
         description: 'List all FAQs.',
     })
-    public async get(message: Message): Promise<Message> {
-        if ( ! message.guildId) {
-            return sendGenericErrorReply(message)
-        }
-
+    public async get(message: Message<true>): Promise<Message> {
         const names = await this.repository.listFaq(message.guildId)
 
         if (names.length === 0) {

@@ -4,7 +4,7 @@ import RollPlugin from './index'
 
 describe('replyRoll()', () => {
     async function parseRollResult(input?: string) {
-        const mockMessage = mock<Message>()
+        const mockMessage = mock<Message<true>>()
         const matcher = It.willCapture<string>()
         when(() => mockMessage.reply(matcher)).thenResolve(mockMessage)
         await new RollPlugin().replyRoll(mockMessage, input)

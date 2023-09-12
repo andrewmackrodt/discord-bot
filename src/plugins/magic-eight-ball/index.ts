@@ -37,7 +37,7 @@ export default class MagicEightBallPlugin {
             question: { required: true },
         },
     })
-    public async replyFortune(message: Message, question: string): Promise<any> {
+    public async replyFortune(message: Message<true>, question: string): Promise<any> {
         const index = Math.floor(Math.random() * answers.length)
         const answer = answers[index]
         return message.reply(`:8ball: ${answer}`)

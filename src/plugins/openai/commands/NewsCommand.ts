@@ -19,7 +19,7 @@ export default class NewsCommand extends AbstractTopicCommand{
         separator: null,
         args: { topic: {} },
     })
-    public async news(message: Message, topic?: string) {
+    public async news(message: Message<true>, topic?: string) {
         return this.sendTopicResponse(message, template, topic)
     }
 }

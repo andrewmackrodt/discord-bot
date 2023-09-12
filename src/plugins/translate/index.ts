@@ -32,7 +32,7 @@ export default class TranslatePlugin {
         lastArgIsText: true,
         args: { lang: {}, text: {} },
     })
-    public async replyTranslate(message: Message, lang?: Languages | string, text?: string): Promise<any> {
+    public async replyTranslate(message: Message<true>, lang?: Languages | string, text?: string): Promise<any> {
         let targetLang: string
 
         if (lang) {

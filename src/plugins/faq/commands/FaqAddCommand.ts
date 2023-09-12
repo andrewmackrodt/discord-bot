@@ -19,11 +19,7 @@ export default class FaqAddCommand {
             content: { required: true },
         },
     })
-    public async add(message: Message, name: string, content: string): Promise<Message> {
-        if ( ! message.guildId) {
-            return sendGenericErrorReply(message)
-        }
-
+    public async add(message: Message<true>, name: string, content: string): Promise<Message> {
         if ( ! message.member?.permissions.has('ManageMessages')) {
             return message.reply(error('you do not have permission to manage faqs on this server'))
         }

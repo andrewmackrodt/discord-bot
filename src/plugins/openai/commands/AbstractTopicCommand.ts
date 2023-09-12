@@ -8,7 +8,7 @@ export abstract class AbstractTopicCommand {
     ) {
     }
 
-    protected async sendTopicResponse(message: Message, prompt: string, topic?: string) {
+    protected async sendTopicResponse(message: Message<true>, prompt: string, topic?: string) {
         if ( ! topic || (topic = topic.trim()).length === 0) {
             topic = 'any subject'
         }

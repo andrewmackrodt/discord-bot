@@ -11,7 +11,7 @@ export type RegisterInteractionsHandler = (registry: InteractionRegistry) => voi
 
 export type ConnectHandler = (client: Client) => any
 
-export type MessageHandler = (msg: Message, next: NextFunction) => any
+export type MessageHandler = (message: Message<true>, next: NextFunction) => any
 
 export type ReactionHandler = (
     reaction: MessageReaction | PartialMessageReaction,

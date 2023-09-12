@@ -22,7 +22,7 @@ export interface CommandArgumentOptions {
 
 export type CommandBuilderWithCommand = BuilderWithArgs<CommandOptions, typeof Command, 'command'>
 
-type CommandHandler = (message: Message, ...args: string[]) => Promise<any>
+type CommandHandler = (message: Message<true>, ...args: string[]) => Promise<any>
 
 export type Subcommand = Command & Required<Pick<Command, 'parent'>>
 
@@ -68,7 +68,7 @@ export class Command {
         return commands.reverse().join(' ')
     }
 
-    public execute(message: Message, args: string[]): Promise<any> {
+    public execute(message: Message<true>, args: string[]): Promise<any> {
         return this.handler!(message, ...args)
     }
 }

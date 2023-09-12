@@ -28,7 +28,7 @@ export default class HelpPlugin implements Plugin {
             command: {},
         },
     })
-    public async sendHelpMessage(message: Message, command?: string): Promise<any> {
+    public async sendHelpMessage(message: Message<true>, command?: string): Promise<any> {
         if (command) {
             return this.sendCommandHelpMessage(message, command)
         }
@@ -69,7 +69,7 @@ export default class HelpPlugin implements Plugin {
     @interaction(Interactions.HelpPrev)
     public async changePageInteraction(interaction: Interaction): Promise<void> {
         if ( ! (interaction instanceof ButtonInteraction) ||
-            ! interaction.message.guild
+            ! interaction.message.inGuild()
         ) {
             return
         }
@@ -107,7 +107,7 @@ export default class HelpPlugin implements Plugin {
         void suppressInteractionReply(interaction)
     }
 
-    protected sendCommandHelpMessage(message: Message, name: string) {
+    protected sendCommandHelpMessage(message: Message<true>, name: string) {
         const command = this._registry?.get(name)
 
         if ( ! command) {

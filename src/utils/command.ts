@@ -1,3 +1,4 @@
+import type { Message } from 'discord.js'
 import type { CommandOptions, Subcommand } from '../registries/Command'
 import { Command } from '../registries/Command'
 import type { CommandRegistry } from '../registries/CommandRegistry'
@@ -30,8 +31,10 @@ export class ConfigurationError extends Error {
 
 const registered: Record<string, DecoratorRegistration[]> = {}
 
-export function command(command: string, options?: DecoratorOptions) {
-    return <T extends object>(target: T, propertyKey: keyof T, descriptor: PropertyDescriptor) => {
+type CommandPropertyDescriptor = TypedPropertyDescriptor<(message: Message<true>, ...args: string[]) => any>
+
+export function command<T extends object>(command: string, options?: DecoratorOptions) {
+    return (target: T, propertyKey: keyof T, descriptor: CommandPropertyDescriptor) => {
         const name = target.constructor.name
         if ( ! (name in registered)) {
             registered[name] = []
