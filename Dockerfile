@@ -1,7 +1,7 @@
 ################################################################################
 # Builder
 ################################################################################
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 RUN apk add --no-cache g++ make python3
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 RUN npm i -g json
@@ -20,7 +20,7 @@ RUN npm run build:compile --silent
 ################################################################################
 # Target
 ################################################################################
-FROM node:18-alpine
+FROM node:20-alpine
 RUN apk add --no-cache imagemagick tini
 COPY --from=builder /opt/app/out/ /opt/app/
 WORKDIR /opt/app

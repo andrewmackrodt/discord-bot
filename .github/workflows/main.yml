@@ -9,17 +9,17 @@ on:
       - '**'
 
 env:
-  PRIMARY_NODE_VERSION: 18
+  PRIMARY_NODE_VERSION: 20
 
 jobs:
   eslint:
     name: eslint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js v${{ env.PRIMARY_NODE_VERSION }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
           cache: npm
@@ -47,10 +47,10 @@ jobs:
     name: jest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js v${{ env.PRIMARY_NODE_VERSION }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
           cache: npm

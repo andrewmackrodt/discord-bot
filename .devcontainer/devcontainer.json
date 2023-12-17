@@ -1,6 +1,6 @@
 {
     "name": "Node.js",
-    "image": "node:18-bookworm",
+    "image": "node:20-bookworm",
     "features": {
         "ghcr.io/devcontainers/features/sshd": "latest"
     },
