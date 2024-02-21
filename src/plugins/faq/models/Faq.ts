@@ -25,8 +25,4 @@ export class Faq extends BaseEntity {
 
     @UpdateDateColumn({ name: 'updated_at' })
     public updatedAt!: Date
-
-    @ManyToOne(() => User, user => user.faqs, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'author_id', foreignKeyConstraintName: 'faqs_author_id_users_id_fkey' })
-    public author?: Relation<User>
 }
