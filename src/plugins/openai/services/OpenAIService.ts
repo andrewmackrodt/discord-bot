@@ -79,10 +79,11 @@ export class OpenAIService {
 
         try {
             const res = await sdk.images.generate({
+                model: 'dall-e-3',
                 n: 1,
                 prompt: description,
                 response_format: 'b64_json',
-                size: '512x512',
+                size: '1792x1024',
                 user: message.author.id,
             })
             const content = description.replaceAll('\\', '\\\\').replaceAll('*', '\\*')
