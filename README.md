@@ -20,16 +20,16 @@ Certain features require setting a third-party API key:
 
 **Operating System**: 🍏 macOS or 🐧 Linux. 🪟 Windows has only been tested using WSL2.
 
-**Runtime:** Node 18+, npm
+**Runtime:** Node 20+, pnpm
 
 **Additional Packages:** graphicsmagick
 
 ## Installation
 
-- Ensure Node 18+ and npm are available. If Node is not installed or less than the required version, you can run
+- Ensure Node 20+ and pnpm are available. If Node is not installed or less than the required version, you can run
 `./setup.sh` which will download a compatible runtime using [nvm](https://github.com/nvm-sh/nvm#about).
 - Clone the repository and open a terminal in the project directory.
-- Run `npm install` to download package dependencies.
+- Run `pnpm install` to download package dependencies.
 - Copy `.env.sample` to `.env`.
 - If you have an existing discord application you wish to use, set `DISCORD_TOKEN` in `.env`, e.g. `DISCORD_TOKEN=abc`. Otherwise, proceed to the next section. 
 
@@ -59,15 +59,15 @@ Read Messages/View Channels, Send Messages, Send Messages in Threads, Embed Link
 
 ## Usage
 
-Run `npm start` to start the bot.
+Run `pnpm start` to start the bot.
 
 ### Additional Commands
 
-| Command                        | Description                               |
-|--------------------------------|-------------------------------------------|
-| `npm run build`                | Compile prod version to `./out`           |
-| `npm run lint`                 | Run ESLint                                |
-| `npm run lint:fix`             | Run ESLint and attempt fixes              |
-| `npm run typeorm -- [options]` | Run TypeORM cli commands                  |
-| `npm run start`                | Start the bot                             |
-| `npm run watch`                | Start the bot and restart on file changes |
+| Command                         | Description                               |
+|---------------------------------|-------------------------------------------|
+| `pnpm run build`                | Compile prod version to `./out`           |
+| `pnpm run lint`                 | Run ESLint                                |
+| `pnpm run lint:fix`             | Run ESLint and attempt fixes              |
+| `pnpm run typeorm -- [options]` | Run TypeORM cli commands                  |
+| `pnpm run start`                | Start the bot                             |
+| `pnpm run watch`                | Start the bot and restart on file changes |

@@ -1,7 +1,6 @@
 #!/bin/bash -l
 set -euo pipefail
-base_dir="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd -P)"
-cd "$base_dir"
+cd "$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd -P)"
 
 function install_node() {
   echo -n "detecting node version: " >&2
@@ -13,7 +12,7 @@ function install_node() {
   local nodeMajorVersion
   nodeMajorVersion=$(node --version 2>/dev/null | sed -E 's/[^0-9]*([0-9]+).*/\1/' || echo "0")
 
-  if [[ $nodeMajorVersion -ge 18 ]]; then
+  if [[ $nodeMajorVersion -ge 20 ]]; then
     echo "no"
     return
   fi
@@ -30,7 +29,7 @@ function install_node() {
   if [[ "$nvmVersion" == "" ]]; then
     echo "yes"
     echo "installing nvm .."
-    curl -fsSL -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash >/dev/null
+    curl -fsSL -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash >/dev/null
     if [[ "${NVM_DIR:-}" == "" ]]; then
       export NVM_DIR="$HOME/.nvm"
     fi
@@ -41,19 +40,22 @@ function install_node() {
     echo "no"
   fi
 
-  echo "installing node 18 .."
-  nvm install lts/hydrogen
-  nvm use .
+  echo "installing node 20 .."
+  nvm install lts/iron
+  nvm alias default lts/iron
 }
 
 function install_node_modules() {
-  echo -n "npm install required: " >&2
-  if [[ -f ./node_modules/.package-lock.json ]]; then
+  echo -n "pnpm install required: " >&2
+  if [[ -f ./node_modules/.pnpm/lock.yaml ]]; then
     echo "no"
     return
   fi
   echo "yes"
-  npm install --silent
+  if ! which pnpm >/dev/null 2>&1; then
+    corepack enable
+  fi
+  pnpm install
 }
 
 install_node

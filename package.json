@@ -69,7 +69,9 @@
     "shelljs": "^0.8.5",
     "shx": "^0.3.4",
     "strong-mock": "^8.0.1",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "~5.4.4"
-  }
+  },
+  "packageManager": "pnpm@8.15.6+sha256.01c01eeb990e379b31ef19c03e9d06a14afa5250b82e81303f88721c99ff2e6f"
 }

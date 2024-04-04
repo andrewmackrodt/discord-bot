@@ -3,30 +3,32 @@
 ################################################################################
 FROM node:20-alpine AS builder
 RUN apk add --no-cache g++ make python3
-ENV NPM_CONFIG_UPDATE_NOTIFIER=false
-RUN npm i -g json
-COPY package.json package-lock.json /opt/app/
+RUN NPM_CONFIG_UPDATE_NOTIFIER=false npm i -g json
+COPY package.json pnpm-lock.yaml /opt/app/
 WORKDIR /opt/app
-RUN npm i --no-progress
-RUN mkdir out && cat package.json \
-  | json -q -e 'this.scripts = { "typeorm": "typeorm -d src/db.js", "start": "node index.js" }; delete this.devDependencies' \
-  | tee out/package.json >/dev/null
-RUN npm i --no-progress --omit=dev --package-lock-only --prefix=out/
-RUN cd out \
- && npm i --no-progress --omit=dev
+RUN corepack enable
+RUN pnpm install --frozen-lockfile
+RUN mkdir out \
+ && cat package.json \
+     | json -q -e 'this.scripts = { "typeorm": "typeorm -d src/db.js", "start": "node index.js" }; delete this.devDependencies' \
+     | tee out/package.json >/dev/null \
+ && cp pnpm-lock.yaml out/ \
+ && cd out \
+ && pnpm install --no-optional --prefer-offline --prod
 COPY . /opt/app/
-RUN npm run build:compile --silent
+RUN pnpm run build:compile --silent
 
 ################################################################################
 # Target
 ################################################################################
 FROM node:20-alpine
-RUN apk add --no-cache imagemagick tini
+RUN apk add --no-cache imagemagick graphicsmagick tini
 COPY --from=builder /opt/app/out/ /opt/app/
 WORKDIR /opt/app
 RUN mkdir -p /config \
+ && chown node:nobody /config \
+ && chmod 2770 /config \
  && ln -s /config /opt/app/config
 VOLUME /config
 USER node
-ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 ENTRYPOINT ["/sbin/tini", "--", "node", "--no-warnings", "index.js"]

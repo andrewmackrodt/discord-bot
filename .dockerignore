@@ -4,6 +4,6 @@
 !build.ts
 !index.ts
 !package.json
-!package-lock.json
+!pnpm-lock.yaml
 !tsconfig.build.json
 !tsconfig.json

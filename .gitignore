@@ -7,7 +7,7 @@ config/
 coverage/
 node_modules/
 out/
-npm-debug.log
+*.log
 
 # idea
 .idea/*
