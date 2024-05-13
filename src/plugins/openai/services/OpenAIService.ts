@@ -39,7 +39,7 @@ export class OpenAIService {
 
         try {
             const res = await sdk.chat.completions.create({
-                model: 'gpt-4',
+                model: 'gpt-4o',
                 messages: prompts,
                 max_tokens: 1000,
                 frequency_penalty: 0.5,
