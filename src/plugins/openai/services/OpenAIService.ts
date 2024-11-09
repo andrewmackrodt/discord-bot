@@ -1,6 +1,7 @@
 import type { Message } from 'discord.js'
 import { AttachmentBuilder } from 'discord.js'
 import { OpenAI } from 'openai'
+import { BadRequestError } from 'openai/error'
 import type { ChatCompletionMessageParam } from 'openai/resources/chat'
 import { ConfigurationError } from '../../../utils/command'
 import { component } from '../../../utils/di'
@@ -33,6 +34,7 @@ export class OpenAIService {
     ): Promise<ReplyContent | undefined> {
         const sdk = this.getSdk()
 
+        // noinspection ES6MissingAwait
         const messageReply = reply
             ? Promise.resolve(reply)
             : message.reply(`:thinking: ${message.client.user.username} is thinking ...`)
@@ -47,14 +49,11 @@ export class OpenAIService {
                 temperature: 0.5,
                 user: message.author.id,
             })
-
             console.info('openai: usage', res.usage)
             const content = res.choices.map(choice => choice.message.content?.trim()).join(' ')
             return { reply: messageReply, content }
         } catch (e) {
-            console.error('openai: error', e)
-            const content = error('an error occurred please try again later')
-            messageReply.then(reply => reply.edit(content))
+            this.replyWithErrorMessage(messageReply, e)
         }
     }
 
@@ -96,9 +95,7 @@ export class OpenAIService {
                 ],
             }))
         } catch (e) {
-            console.error('openai: error', e)
-            const content = error('an error occurred please try again later')
-            replyPromise.then(reply => reply.edit(content))
+            this.replyWithErrorMessage(replyPromise, e)
         }
     }
 
@@ -111,5 +108,19 @@ export class OpenAIService {
         }
 
         return this._openai
+    }
+
+    private replyWithErrorMessage(messageReply: Promise<Message<boolean>>, e: unknown) {
+        console.error('openai: error', e)
+        let message = 'an error occurred please try again later'
+        if (
+            e instanceof BadRequestError &&
+            typeof e.error === 'object' && e.error !== null &&
+            'message' in e.error && typeof e.error.message === 'string'
+        ) {
+            message = e.error.message
+        }
+        const content = error(message)
+        messageReply.then(reply => reply.edit(content))
     }
 }

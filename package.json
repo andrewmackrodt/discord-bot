@@ -22,6 +22,7 @@
     "typeorm": "ts-node ./node_modules/typeorm/cli -d src/db.ts",
     "watch": "ts-node-dev --respawn --transpile-only index"
   },
+  "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee",
   "dependencies": {
     "axios": "^1.6.8",
     "better-sqlite3": "^9.6.0",
@@ -32,7 +33,7 @@
     "glob": "^10.3.15",
     "gm": "^1.25.0",
     "node-schedule": "^2.1.1",
-    "openai": "^4.46.0",
+    "openai": "^4.71.1",
     "reflect-metadata": "^0.2.2",
     "spotify-web-api-node": "^5.0.2",
     "tslib": "^2.6.2",
@@ -72,6 +73,5 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "~5.4.5"
-  },
-  "packageManager": "pnpm@9.1.1+sha256.9551e803dcb7a1839fdf5416153a844060c7bce013218ce823410532504ac10b"
+  }
 }
