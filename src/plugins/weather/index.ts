@@ -81,6 +81,8 @@ function getWeatherCodeText(code: WeatherCode | number): string | null {
 }
 //endregion
 
+const userAgent = 'Mozilla/5.0 (compatible; discord-bot/1.0.0)'
+
 export default class WeatherPlugin {
     @command('weather', {
         emoji: ':white_sun_cloud:',
@@ -117,6 +119,9 @@ export default class WeatherPlugin {
                 params: {
                     q: location,
                     format: 'jsonv2',
+                },
+                headers: {
+                    'User-Agent': userAgent,
                 },
             })
 

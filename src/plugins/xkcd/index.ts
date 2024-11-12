@@ -7,7 +7,7 @@ import { sendErrorToChannel, sendGenericErrorToChannel } from '../../utils/plugi
 
 const comicByIdUrl = 'https://xkcd.com/:id/'
 const randomComicUrl = 'https://c.xkcd.com/random/comic/'
-const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'
+const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
 
 export default class XkcdPlugin {
     @command('xkcd', {
