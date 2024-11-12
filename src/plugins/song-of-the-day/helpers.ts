@@ -14,10 +14,7 @@ export interface PaginatedOptionalUserQuery {
 
 export async function suppressInteractionReply(interaction: ButtonInteraction) {
     try {
-        await interaction.reply({ content: '', ephemeral: true })
+        await interaction.deferUpdate()
     } catch (err) {
-        // the discord api requires sending a non-empty reply to interactions
-        // rather than deferReplay then deleteReplay which would create a new
-        // message in the channel, we submit a bad request and hide the error
     }
 }
