@@ -1,4 +1,4 @@
-import { Message } from 'discord.js'
+import type { Message } from 'discord.js'
 import type { ChatCompletionMessageParam } from 'openai/resources/chat'
 import { injectable } from 'tsyringe'
 import { command } from '../../../utils/command'

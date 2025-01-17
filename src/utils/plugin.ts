@@ -7,7 +7,12 @@ export function sendErrorReply(message: Message, text: string): Promise<any> {
 }
 
 export function sendErrorToChannel(message: Message, text: string): Promise<any> {
-    return message.channel.send(error(text))
+    if (message.channel.isSendable()) {
+        return message.channel.send(error(text))
+    } else {
+        // todo log error
+        return Promise.resolve()
+    }
 }
 
 export function sendGenericErrorReply(message: Message): Promise<any> {

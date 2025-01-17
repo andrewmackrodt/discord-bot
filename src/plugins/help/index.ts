@@ -1,5 +1,5 @@
-import type { APIEmbedField, MessageCreateOptions } from 'discord.js'
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, EmbedBuilder, Message, Interaction } from 'discord.js'
+import type { APIEmbedField, Message, Interaction, MessageCreateOptions } from 'discord.js'
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, EmbedBuilder } from 'discord.js'
 import { getFieldName } from './utils'
 import type { Plugin } from '../../../types/plugins'
 import type { Command } from '../../registries/Command'

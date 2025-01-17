@@ -1,7 +1,7 @@
-import { Message } from 'discord.js'
+import type { Message } from 'discord.js'
 import { injectable } from 'tsyringe'
 import { command } from '../../../utils/command'
-import { error, sendGenericErrorReply, success } from '../../../utils/plugin'
+import { error, success } from '../../../utils/plugin'
 import { FaqRepository } from '../repositories/FaqRepository'
 
 @injectable()

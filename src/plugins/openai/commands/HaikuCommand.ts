@@ -1,4 +1,4 @@
-import { Message } from 'discord.js'
+import type { Message } from 'discord.js'
 import { injectable } from 'tsyringe'
 import { AbstractTopicCommand } from './AbstractTopicCommand'
 import { command } from '../../../utils/command'

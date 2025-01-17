@@ -1,8 +1,7 @@
-import type { APIEmbed } from 'discord.js'
-import { Message } from 'discord.js'
+import type { APIEmbed , Message } from 'discord.js'
 import { injectable } from 'tsyringe'
 import { command } from '../../../utils/command'
-import { error, lookupUserId, sendErrorReply, sendGenericErrorReply } from '../../../utils/plugin'
+import { error, lookupUserId, sendErrorReply } from '../../../utils/plugin'
 import { FaqRepository } from '../repositories/FaqRepository'
 
 @injectable()

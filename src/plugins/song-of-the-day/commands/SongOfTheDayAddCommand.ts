@@ -1,4 +1,4 @@
-import { Message } from 'discord.js'
+import type { Message } from 'discord.js'
 import type SpotifyWebApi from 'spotify-web-api-node'
 import { injectable } from 'tsyringe'
 import type { User } from '../../../models/User'

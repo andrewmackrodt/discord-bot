@@ -16,7 +16,7 @@ function requirePlugins(): Plugin[] {
     const ext = isTs ? 'ts' : 'js'
     const pluginsPath = path.resolve(__dirname, 'src/plugins')
 
-    /* eslint-disable @typescript-eslint/no-var-requires */
+    /* eslint-disable @typescript-eslint/no-require-imports */
     glob.sync(`${pluginsPath}/*/index.${ext}`).map(filepath => {
         const augmentsFilepath = path.join(path.dirname(filepath), `augments.${ext}`)
 
@@ -32,7 +32,7 @@ function requirePlugins(): Plugin[] {
 
         plugins.push(plugin)
     })
-    /* eslint-enable @typescript-eslint/no-var-requires */
+    /* eslint-enable @typescript-eslint/no-require-imports */
 
     return plugins
 }

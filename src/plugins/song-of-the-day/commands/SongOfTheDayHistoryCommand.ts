@@ -1,5 +1,4 @@
-import type { MessageEditOptions, TextChannel } from 'discord.js'
-import { Interaction, Message } from 'discord.js'
+import type { MessageEditOptions, TextChannel , Interaction, Message } from 'discord.js'
 import { injectable } from 'tsyringe'
 import { AbstractSongOfTheDayHistoryCommand } from './AbstractSongOfTheDayHistoryCommand'
 import { command } from '../../../utils/command'

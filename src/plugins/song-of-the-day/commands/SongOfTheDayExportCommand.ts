@@ -1,12 +1,11 @@
-import { AttachmentBuilder, Message, TextChannel } from 'discord.js'
-import { injectable } from 'tsyringe'
+import type { Message } from 'discord.js'
+import { AttachmentBuilder, TextChannel } from 'discord.js'
 import { command } from '../../../utils/command'
 import { getYmd } from '../../../utils/date'
 import { Song } from '../models/Song'
 
 const BATCH_LIMIT = 100
 
-@injectable()
 export default class SongOfTheDayExportCommand {
     @command('sotd export', {
         description: 'Export song of the day data as CSV.',

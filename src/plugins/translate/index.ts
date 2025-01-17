@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { Message } from 'discord.js'
+import type { Message } from 'discord.js'
 import { command } from '../../utils/command'
 import { sendErrorReply, sendGenericErrorReply } from '../../utils/plugin'
 

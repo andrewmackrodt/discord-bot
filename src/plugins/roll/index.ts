@@ -1,4 +1,4 @@
-import { Message } from 'discord.js'
+import type { Message } from 'discord.js'
 import { command, CommandUsageError } from '../../utils/command'
 
 export default class RollPlugin {

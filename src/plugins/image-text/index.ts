@@ -15,7 +15,7 @@ export default class ImageTextPlugin implements Plugin {
             const attachment = new AttachmentBuilder(image.data, { name: `file.${ext}` })
             await message.channel.send({ files: [attachment] })
         } catch (e) {
-            let content = ''
+            let content: string
             if (e instanceof UnknownImageError) {
                 const names = Object.keys(images).join(', ')
                 content = `unknown image - must be one of: ${names}`

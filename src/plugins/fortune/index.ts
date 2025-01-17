@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { Message } from 'discord.js'
+import type { Message } from 'discord.js'
 import { command } from '../../utils/command'
 
 const url = 'http://yerkee.com/api/fortune'

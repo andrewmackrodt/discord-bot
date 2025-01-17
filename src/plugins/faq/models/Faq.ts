@@ -1,5 +1,4 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Relation, UpdateDateColumn } from 'typeorm'
-import { User } from '../../../models/User'
+import { BaseEntity, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 
 @Entity({ name: 'faqs' })
 @Index('faqs_server_id_name_uindex', ['serverId', 'name'], { unique: true })

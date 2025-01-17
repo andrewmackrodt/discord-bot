@@ -1,5 +1,5 @@
-import type { ButtonComponent } from 'discord.js'
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, Interaction, Message } from 'discord.js'
+import type { ButtonComponent , Interaction, Message } from 'discord.js'
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js'
 import { injectable } from 'tsyringe'
 import { command } from '../../../utils/command'
 import { interaction } from '../../../utils/interaction'

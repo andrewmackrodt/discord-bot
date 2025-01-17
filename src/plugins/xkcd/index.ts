@@ -1,7 +1,8 @@
 import type { AxiosResponse } from 'axios'
 import axios, { AxiosError } from 'axios'
 import { load as cheerio } from 'cheerio'
-import { ButtonStyle, EmbedBuilder, Message } from 'discord.js'
+import type { Message } from 'discord.js'
+import { EmbedBuilder } from 'discord.js'
 import { command, CommandUsageError } from '../../utils/command'
 import { sendErrorToChannel, sendGenericErrorToChannel } from '../../utils/plugin'
 

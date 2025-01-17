@@ -3,5 +3,8 @@
   "exclude": [
     "./src/**/*.test.ts",
     "./*.ts"
+  ],
+  "files": [
+    "./index.ts"
   ]
 }
