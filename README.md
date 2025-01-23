@@ -22,7 +22,7 @@ Certain features require setting a third-party API key:
 
 **Runtime:** Node 20+, pnpm
 
-**Additional Packages:** graphicsmagick
+**Additional Packages:** imagemagick, graphicsmagick
 
 ## Installation
 

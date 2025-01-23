@@ -26,7 +26,7 @@ jobs:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
           cache: pnpm
 
-      - name: Install dependencies
+      - name: Install package dependencies
         run: pnpm install --frozen-lockfile
 
       - if: ${{ env.GITEA_ACTIONS != 'true' }}
@@ -56,6 +56,9 @@ jobs:
     name: jest
     runs-on: ubuntu-latest
     steps:
+      - name: Install system dependencies
+        run: sudo apt install -qqy imagemagick
+
       - uses: actions/checkout@v4
 
       - run: corepack enable
@@ -66,7 +69,7 @@ jobs:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
           cache: pnpm
 
-      - name: Install dependencies
+      - name: Install package dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Jest
