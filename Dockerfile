@@ -1,7 +1,7 @@
 ################################################################################
 # Builder
 ################################################################################
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 RUN apk add --no-cache g++ make python3
 RUN NPM_CONFIG_UPDATE_NOTIFIER=false npm i -g json
 COPY package.json pnpm-lock.yaml /opt/app/
@@ -21,7 +21,7 @@ RUN pnpm run build:compile --silent
 ################################################################################
 # Target
 ################################################################################
-FROM node:20-alpine
+FROM node:22-alpine
 RUN apk add --no-cache imagemagick graphicsmagick tini
 COPY --from=builder /opt/app/out/ /opt/app/
 WORKDIR /opt/app

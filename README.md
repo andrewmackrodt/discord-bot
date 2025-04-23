@@ -20,7 +20,7 @@ Certain features require setting a third-party API key:
 
 **Operating System**: 🍏 macOS or 🐧 Linux. 🪟 Windows has only been tested using WSL2.
 
-**Runtime:** Node 20+, pnpm
+**Runtime:** Node 22+, pnpm
 
 **Additional Packages:** imagemagick, graphicsmagick
 

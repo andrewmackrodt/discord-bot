@@ -86,7 +86,10 @@ export class OpenAIService {
                 user: message.author.id,
             })
             const content = description.replaceAll('\\', '\\\\').replaceAll('*', '\\*')
-            const imageB64Json = res.data[0].b64_json!
+            const imageB64Json = res.data?.[0].b64_json
+            if ( ! imageB64Json) {
+                return this.replyWithErrorMessage(replyPromise, null)
+            }
             replyPromise.then(reply => reply.edit({
                 content: `**${content}**`,
                 files: [

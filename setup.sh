@@ -2,6 +2,8 @@
 set -euo pipefail
 cd "$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd -P)"
 
+display_nvm_usage="false"
+
 function install_node() {
   echo -n "detecting node version: " >&2
   local nodeVersion
@@ -12,7 +14,7 @@ function install_node() {
   local nodeMajorVersion
   nodeMajorVersion=$(node --version 2>/dev/null | sed -E 's/[^0-9]*([0-9]+).*/\1/' || echo "0")
 
-  if [[ $nodeMajorVersion -ge 20 ]]; then
+  if [[ $nodeMajorVersion -ge 22 ]]; then
     echo "no"
     return
   fi
@@ -40,9 +42,15 @@ function install_node() {
     echo "no"
   fi
 
-  echo "installing node 20 .."
-  nvm install lts/iron
-  nvm alias default lts/iron
+  echo "installing node 22 .."
+  if [[ "${NVM_REPLACE_DEFAULT_ALIAS:-}" =~ TRUE|[Tt]rue|YES|[Yy]es|1 ]]; then
+    nvm install lts/jod --reinstall-packages-from=current
+    echo "detected NVM_REPLACE_DEFAULT_ALIAS=$NVM_REPLACE_DEFAULT_ALIAS .. replacing default node"
+    nvm alias default lts/jod
+  else
+    nvm install lts/jod
+    display_nvm_usage="true"
+  fi
 }
 
 function install_node_modules() {
@@ -60,3 +68,20 @@ function install_node_modules() {
 
 install_node
 install_node_modules
+
+if [[ "$display_nvm_usage" == "true" ]]; then
+  cat <<'EOF'
+
+================================================================================
+[NOTICE]
+================================================================================
+You may need to activate the node environment by running:
+  nvm use .
+
+Alternatively you can replace your default node version by running:
+  nvm alias default lts/jod
+
+If you see a command not found error, open a new shell.
+
+EOF
+fi
