@@ -25,6 +25,7 @@ type PluginEventParameters<T extends PluginEvent>
 type ErrorType = Error | string
 
 export class Client {
+    protected readonly allowBotUserIds: Set<string> = new Set()
     protected readonly client: Discord.Client
     protected readonly commandRegistry: CommandRegistry
     protected readonly interactionRegistry: InteractionRegistry
@@ -49,6 +50,13 @@ export class Client {
                 GatewayIntentBits.MessageContent,
             ],
         })
+
+        if ('ALLOW_BOT_USER_IDS' in process.env && process.env.ALLOW_BOT_USER_IDS) {
+            process.env.ALLOW_BOT_USER_IDS.split(/[,:]/)
+                .map(id => id.trim())
+                .filter(id => id.match(/^[0-9]+$/))
+                .forEach(id => this.allowBotUserIds.add(id))
+        }
 
         this.commandRegistry = new CommandRegistry()
         this.interactionRegistry = new InteractionRegistry()
@@ -164,7 +172,7 @@ export class Client {
     }
 
     protected onMessage = async (message: Message): Promise<void> => {
-        if (message.author.bot || ! message.inGuild()) {
+        if ((message.author.bot && ! this.allowBotUserIds.has(message.author.id)) || ! message.inGuild()) {
             return
         }
 
@@ -263,7 +271,7 @@ export class Client {
         reaction: MessageReaction | PartialMessageReaction,
         user: User | PartialUser,
     ): Promise<void> => {
-        if (user.bot || ! reaction.message.inGuild()) {
+        if ((user.bot && ! this.allowBotUserIds.has(user.id)) || ! reaction.message.inGuild()) {
             return
         }
 
@@ -274,7 +282,7 @@ export class Client {
         reaction: MessageReaction | PartialMessageReaction,
         user: User | PartialUser,
     ): Promise<void> => {
-        if (user.bot || ! reaction.message.inGuild()) {
+        if ((user.bot && ! this.allowBotUserIds.has(user.id)) || ! reaction.message.inGuild()) {
             return
         }
 
@@ -282,7 +290,7 @@ export class Client {
     }
 
     protected onInteraction = async (interaction: Interaction): Promise<void> => {
-        if (interaction.user.bot || ! interaction.inGuild()) {
+        if ((interaction.user.bot && ! this.allowBotUserIds.has(interaction.user.id)) || ! interaction.inGuild()) {
             return
         }
 
