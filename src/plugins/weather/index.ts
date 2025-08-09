@@ -115,7 +115,7 @@ export default class WeatherPlugin {
 
     protected async searchGeocode(location: string): Promise<Geocode | null> {
         const { data } = await axios.get<Geocode[]>(
-            'https://nominatim.openstreetmap.org/search.php', {
+            'https://nominatim.openstreetmap.org/search', {
                 params: {
                     q: location,
                     format: 'jsonv2',
