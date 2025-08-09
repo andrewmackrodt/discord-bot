@@ -3,7 +3,7 @@
 const { fixupConfigRules, fixupPluginRules } = require('@eslint/compat')
 const { FlatCompat } = require('@eslint/eslintrc')
 const js = require('@eslint/js')
-const stylisticEslintPluginTs = require('@stylistic/eslint-plugin-ts')
+const stylisticEslintPlugin = require('@stylistic/eslint-plugin')
 const typescriptEslint = require('@typescript-eslint/eslint-plugin')
 const tsParser = require('@typescript-eslint/parser')
 const _import = require('eslint-plugin-import')
@@ -23,7 +23,7 @@ module.exports = [...fixupConfigRules(compat.extends(
 )), {
     'plugins': {
         '@typescript-eslint': fixupPluginRules(typescriptEslint),
-        '@stylistic/ts': stylisticEslintPluginTs,
+        '@stylistic/ts': stylisticEslintPlugin,
         'import': fixupPluginRules(_import),
         'unused-imports': unusedImports,
     },

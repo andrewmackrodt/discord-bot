@@ -20,7 +20,7 @@ interface ServerHistoryRow {
     author: string
     date: string
     track_id: string
-    release_date: string | null
+    release_date: string | number | null
     playcount: number | null
     playcount_updated_at: string | null
 }

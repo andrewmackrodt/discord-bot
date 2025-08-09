@@ -121,14 +121,14 @@ export default class CyaCommand {
     }
 
     private async replyToChoice(interaction: ButtonInteraction) {
-        const reply = interaction.deferReply({ fetchReply: true })
+        const reply = interaction.deferReply({ withResponse: true }).then(r => r.resource!.message!)
 
         const assistantOutput = interaction.message.content
         let edited = assistantOutput + '\n'
         const choiceIndex = interaction.customId.replaceAll(/[^0-9]+/g, '')
         let userInput: string
 
-        const buttons = interaction.message.components[0].components as ButtonComponent[]
+        const buttons = interaction.message.components.find(c => 'components' in c)!.components as ButtonComponent[]
 
         for (const i in buttons) {
             let line = `[${parseInt(i) + 1}]: ${buttons[i].label}`

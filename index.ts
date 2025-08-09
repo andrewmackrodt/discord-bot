@@ -8,7 +8,7 @@ import { container } from 'tsyringe'
 import { Client } from './src/Client'
 import type { Plugin } from './types/plugins'
 
-dotenv.config()
+dotenv.config({ quiet: true })
 
 function requirePlugins(): Plugin[] {
     const plugins: Plugin[] = []

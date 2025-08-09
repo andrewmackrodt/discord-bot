@@ -78,7 +78,7 @@ export default class SongOfTheDayHistoryCommand extends AbstractSongOfTheDayHist
 
                     if (row.playcount && row.playcount_updated_at && row.release_date) {
                         const playCountUpdatedDate = row.playcount_updated_at.split(' ')[0]
-                        const daysBetweenRelease = getDaysBetween(playCountUpdatedDate, row.release_date)
+                        const daysBetweenRelease = getDaysBetween(playCountUpdatedDate, row.release_date.toString())
                         const ppd = row.playcount / daysBetweenRelease
                         const daysBetweenAdded = getDaysBetween(playCountUpdatedDate, row.date)
                         const delta = Math.round(ppd * daysBetweenAdded)
