@@ -1,15 +1,13 @@
 import type { Message } from 'discord.js'
 import { injectable } from 'tsyringe'
+
 import { command } from '../../../utils/command'
 import { error, success } from '../../../utils/plugin'
 import { FaqRepository } from '../repositories/FaqRepository'
 
 @injectable()
 export default class FaqDeleteCommand {
-    public constructor(
-        private readonly repository: FaqRepository,
-    ) {
-    }
+    constructor(private readonly repository: FaqRepository) {}
 
     @command('faq delete', {
         description: 'Delete a FAQ.',
@@ -17,8 +15,8 @@ export default class FaqDeleteCommand {
             name: { required: true },
         },
     })
-    public async delete(message: Message<true>, name: string): Promise<Message> {
-        if ( ! message.member?.permissions.has('ManageMessages')) {
+    async delete(message: Message<true>, name: string): Promise<Message> {
+        if (!message.member?.permissions.has('ManageMessages')) {
             return message.reply(error('you do not have permission to manage faqs on this server'))
         }
 

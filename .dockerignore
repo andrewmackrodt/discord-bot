@@ -5,5 +5,6 @@
 !index.ts
 !package.json
 !pnpm-lock.yaml
+!pnpm-workspace.yaml
 !tsconfig.build.json
 !tsconfig.json

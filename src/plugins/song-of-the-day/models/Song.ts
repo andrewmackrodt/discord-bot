@@ -1,5 +1,16 @@
 import type { Relation } from 'typeorm'
-import { BaseEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
+import {
+    BaseEntity,
+    Column,
+    CreateDateColumn,
+    Entity,
+    Index,
+    JoinColumn,
+    ManyToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from 'typeorm'
+
 import { User } from '../../../models/User'
 
 @Entity({ name: 'songs' })
@@ -7,48 +18,48 @@ import { User } from '../../../models/User'
 @Index('songs_user_id_index', ['userId'])
 export class Song extends BaseEntity {
     @PrimaryGeneratedColumn()
-    public id!: number
+    id!: number
 
     @Column({ name: 'server_id' })
-    public serverId!: string
+    serverId!: string
 
     @Column({ name: 'track_id' })
-    public trackId!: string
+    trackId!: string
 
     @Column()
-    public artist!: string
+    artist!: string
 
     @Column()
-    public title!: string
+    title!: string
 
     @Column({ type: 'date' })
-    public date!: string
+    date!: string
 
     @Column({ name: 'user_id' })
-    public userId!: string
+    userId!: string
 
     @Column({ name: 'message_id', nullable: true })
-    public messageId?: string
+    messageId?: string
 
     @Column({ nullable: true })
-    public playcount?: number
+    playcount?: number
 
     @Column({ name: 'playcount_updated_at', nullable: true, type: 'datetime' })
-    public playcountUpdatedAt?: Date
+    playcountUpdatedAt?: Date
 
     @CreateDateColumn({ name: 'created_at' })
-    public createdAt!: Date
+    createdAt!: Date
 
     @UpdateDateColumn({ name: 'updated_at' })
-    public updatedAt!: Date
+    updatedAt!: Date
 
     @Column({ name: 'album_id', nullable: true })
-    public albumId?: string
+    albumId?: string
 
     @Column({ name: 'release_date', type: 'date', nullable: true })
-    public releaseDate?: string
+    releaseDate?: string
 
-    @ManyToOne(() => User, user => user.songs, { onDelete: 'CASCADE' })
+    @ManyToOne(() => User, (user) => user.songs, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id', foreignKeyConstraintName: 'songs_user_id_users_id_fkey' })
-    public user?: Relation<User>
+    user?: Relation<User>
 }

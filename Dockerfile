@@ -4,7 +4,7 @@
 FROM node:22-alpine AS builder
 RUN apk add --no-cache g++ make python3
 RUN NPM_CONFIG_UPDATE_NOTIFIER=false npm i -g json
-COPY package.json pnpm-lock.yaml /opt/app/
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml /opt/app/
 WORKDIR /opt/app
 RUN corepack enable
 RUN pnpm install --frozen-lockfile
@@ -12,7 +12,7 @@ RUN mkdir out \
  && cat package.json \
      | json -q -e 'this.scripts = { "typeorm": "typeorm -d src/db.js", "start": "node index.js" }; delete this.devDependencies' \
      | tee out/package.json >/dev/null \
- && cp pnpm-lock.yaml out/ \
+ && cp pnpm-lock.yaml pnpm-workspace.yaml out/ \
  && cd out \
  && pnpm install --no-optional --prefer-offline --prod
 COPY . /opt/app/

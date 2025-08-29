@@ -1,14 +1,8 @@
 import axios from 'axios'
 import type { Message } from 'discord.js'
+
 import { command } from '../../utils/command'
 import { sendErrorReply, sendGenericErrorReply } from '../../utils/plugin'
-
-interface TranslationResult {
-    translations: {
-        detected_source_language: string
-        text: string
-    }[]
-}
 
 enum Languages {
     German = 'de',
@@ -24,7 +18,18 @@ enum Languages {
     Chinese = 'zh',
 }
 
+interface TranslationResult {
+    translations: {
+        detected_source_language: string
+        text: string
+    }[]
+}
+
 export default class TranslatePlugin {
+    protected get authKey(): string | null {
+        return process.env.DEEPL_AUTH_KEY?.length ? process.env.DEEPL_AUTH_KEY : null
+    }
+
     @command('translate', {
         emoji: ':speech_balloon:',
         title: 'Translate',
@@ -32,19 +37,25 @@ export default class TranslatePlugin {
         lastArgIsText: true,
         args: { lang: {}, text: {} },
     })
-    public async replyTranslate(message: Message<true>, lang?: Languages | string, text?: string): Promise<any> {
+    async replyTranslate(
+        message: Message<true>,
+        lang?: Languages | string,
+        text?: string,
+    ): Promise<any> {
         let targetLang: string
 
         if (lang) {
             // detect the target language
-            const match = Object.entries(Languages)
-                .find(([name, code]) =>
+            const match = Object.entries(Languages).find(
+                ([name, code]) =>
                     name.localeCompare(lang, undefined, { sensitivity: 'base' }) === 0 ||
                     code.localeCompare(lang, undefined, { sensitivity: 'base' }) === 0,
-                )
+            )
 
-            if ( ! match) {
-                const languages = Object.keys(Languages).map(s => s.toLowerCase()).join(', ')
+            if (!match) {
+                const languages = Object.keys(Languages)
+                    .map((s) => s.toLowerCase())
+                    .join(', ')
                 return sendErrorReply(message, 'unsupported language\n\nchoose from: ' + languages)
             }
 
@@ -54,21 +65,28 @@ export default class TranslatePlugin {
             targetLang = 'en'
         }
 
-        if ( ! this.authKey) {
-            return sendErrorReply(message, 'the translate plugin is not correctly configured, please contact the server admin')
+        if (!this.authKey) {
+            return sendErrorReply(
+                message,
+                'the translate plugin is not correctly configured, please contact the server admin',
+            )
         }
 
         let reference: Message | undefined
         let sourceText: string
 
-        if ( ! text) {
-            if ( ! message.reference) {
-                return sendErrorReply(message, 'either specify the text to translate or use .translate as a message reply')
+        if (!text) {
+            if (!message.reference) {
+                return sendErrorReply(
+                    message,
+                    'either specify the text to translate or use .translate as a message reply',
+                )
             }
             reference = await message.fetchReference()
             // remove quoted replies from the reference message
             sourceText = reference.content
-                .replace(/^:speech_balloon:.+\n+(?:(?:>|<@[0-9]+).*\n+)*/m, '').trim()
+                .replace(/^:speech_balloon:.+\n+(?:(?:>|<@[0-9]+).*\n+)*/m, '')
+                .trim()
         } else {
             sourceText = text.trim()
         }
@@ -89,7 +107,8 @@ export default class TranslatePlugin {
                         authorization: `DeepL-Auth-Key ${this.authKey}`,
                     },
                     responseType: 'json',
-                })
+                },
+            )
 
             data = response.data
         } catch (e) {
@@ -99,18 +118,17 @@ export default class TranslatePlugin {
         }
 
         const sourceLang = data.translations[0].detected_source_language
-        const translated = data.translations.map(t => t.text).join('\n\n')
+        const translated = data.translations.map((t) => t.text).join('\n\n')
 
         let sb = `:speech_balloon:  Translation from ${sourceLang.toLowerCase()} to ${targetLang}:\n`
         if (reference) {
-            sb += [`<@${reference.author.id}> wrote:`, ...sourceText.split('\n')].map(s => '> ' + s).join('\n') + '\n'
+            sb +=
+                [`<@${reference.author.id}> wrote:`, ...sourceText.split('\n')]
+                    .map((s) => '> ' + s)
+                    .join('\n') + '\n'
         }
         sb += '\n' + translated
 
         return message.reply(sb)
-    }
-
-    protected get authKey(): string | null {
-        return process.env.DEEPL_AUTH_KEY?.length ? process.env.DEEPL_AUTH_KEY : null
     }
 }

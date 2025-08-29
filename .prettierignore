@@ -1,0 +1,6 @@
+.devcontainer
+.idea
+.vscode
+*.iml
+assets
+pnpm-lock.yaml

@@ -33,31 +33,30 @@ export function split(input: string, separator: RegExp | string, limit?: number)
     return output
 }
 
-function toMarkdownRow(cols: string[]) {
-    return '| ' + cols.join(' | ') + ' |'
-}
-
 export function toMarkdownTable(rows: Record<string, Column>[]): string | undefined {
     if (rows.length === 0) {
         return
     }
 
     const headers = Object.keys(rows[0])
-    const maxLen = headers.map(header => header.length)
+    const maxLen = headers.map((header) => header.length)
 
     for (const row of rows) {
         const values = Object.values(row)
 
         for (let i = 0; i < values.length; i++) {
-            const str = typeof values[i] === 'number' ? values[i]!.toString(10) :
-                values[i] === null ? '' :
-                values[i]!.toString()
+            const str =
+                typeof values[i] === 'number'
+                    ? values[i]!.toString(10)
+                    : values[i] === null
+                      ? ''
+                      : values[i]!.toString()
 
             maxLen[i] = Math.max(maxLen[i], str.length)
         }
     }
 
-    const markdown = rows.map(row => {
+    const markdown = rows.map((row) => {
         const values = Object.values(row)
         const cols: string[] = []
 
@@ -76,8 +75,14 @@ export function toMarkdownTable(rows: Record<string, Column>[]): string | undefi
         return toMarkdownRow(cols)
     })
 
-    markdown.unshift(toMarkdownRow(headers.map((header, i) => new Array(maxLen[i]).fill('-').join(''))))
+    markdown.unshift(
+        toMarkdownRow(headers.map((header, i) => new Array(maxLen[i]).fill('-').join(''))),
+    )
     markdown.unshift(toMarkdownRow(headers.map((header, i) => padRight(header, maxLen[i]))))
 
     return markdown.join('\n')
+}
+
+function toMarkdownRow(cols: string[]) {
+    return '| ' + cols.join(' | ') + ' |'
 }

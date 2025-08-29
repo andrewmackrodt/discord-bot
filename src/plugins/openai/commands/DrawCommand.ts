@@ -1,14 +1,12 @@
 import type { Message } from 'discord.js'
 import { injectable } from 'tsyringe'
+
 import { command } from '../../../utils/command'
 import { OpenAIService } from '../services/OpenAIService'
 
 @injectable()
 export class DrawCommand {
-    public constructor(
-        protected readonly openai: OpenAIService,
-    ) {
-    }
+    constructor(protected readonly openai: OpenAIService) {}
 
     @command('draw', {
         emoji: ':crayon:',
@@ -19,7 +17,7 @@ export class DrawCommand {
             description: { required: true },
         },
     })
-    public async sendDrawResponse(message: Message<true>, description: string) {
+    async sendDrawResponse(message: Message<true>, description: string) {
         return this.openai.sendImageGenerationAndReply(message, description)
     }
 }

@@ -1,15 +1,13 @@
 import type { Message } from 'discord.js'
 import type { ChatCompletionMessageParam } from 'openai/resources/chat'
+
 import type { OpenAIService } from '../services/OpenAIService'
 
 export abstract class AbstractTopicCommand {
-    protected constructor(
-        protected readonly openai: OpenAIService,
-    ) {
-    }
+    protected constructor(protected readonly openai: OpenAIService) {}
 
     protected async sendTopicResponse(message: Message<true>, prompt: string, topic?: string) {
-        if ( ! topic || (topic = topic.trim()).length === 0) {
+        if (!topic || (topic = topic.trim()).length === 0) {
             topic = 'any subject'
         }
 

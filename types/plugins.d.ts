@@ -1,4 +1,13 @@
-import type { Client, Message, MessageReaction, PartialMessageReaction, PartialUser, User , Interaction } from 'discord.js'
+import type {
+    Client,
+    Interaction,
+    Message,
+    MessageReaction,
+    PartialMessageReaction,
+    PartialUser,
+    User,
+} from 'discord.js'
+
 import type { CommandRegistry } from '../src/registries/CommandRegistry'
 import type { InteractionRegistry } from '../src/registries/InteractionRegistry'
 import type { Schedule } from '../src/Schedule'

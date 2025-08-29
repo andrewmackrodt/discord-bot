@@ -1,9 +1,41 @@
 import axios from 'axios'
 import type { Message } from 'discord.js'
+
 import { command } from '../../utils/command'
 import { sendErrorToChannel, sendGenericErrorToChannel } from '../../utils/plugin'
 
-//region interfaces
+enum WeatherCode {
+    ClearSkies = 0,
+    MainlyClearSkies = 1,
+    PartlyCloudySkies = 2,
+    OvercastSkies = 3,
+    Fog = 45,
+    DepositingRimeFog = 48,
+    LightDrizzle = 51,
+    ModerateDrizzle = 53,
+    DenseDrizzle = 55,
+    LightFreezingDrizzle = 56,
+    DenseFreezingDrizzle = 57,
+    SlightRain = 61,
+    ModerateRain = 63,
+    HeavyRain = 65,
+    LightFreezingRain = 66,
+    HeavyFreezingRain = 67,
+    SlightSnowfall = 71,
+    ModerateSnowfall = 73,
+    HeavySnowfall = 75,
+    SnowGrains = 77,
+    SlightRainShowers = 80,
+    ModerateRainShowers = 81,
+    ViolentRainShowers = 82,
+    SlightSnowShowers = 85,
+    HeavySnowShowers = 86,
+    Thunderstorms = 95,
+    ThunderstormsWithSlightHail = 96,
+    ThunderstormsWithHeavyHail = 99,
+}
+
+// region interfaces
 interface Geocode {
     place_id: number
     licence: string
@@ -41,45 +73,14 @@ interface Forecast {
     current_weather: CurrentWeather
 }
 
-enum WeatherCode {
-    ClearSkies = 0,
-    MainlyClearSkies = 1,
-    PartlyCloudySkies = 2,
-    OvercastSkies = 3,
-    Fog = 45,
-    DepositingRimeFog = 48,
-    LightDrizzle = 51,
-    ModerateDrizzle = 53,
-    DenseDrizzle = 55,
-    LightFreezingDrizzle = 56,
-    DenseFreezingDrizzle = 57,
-    SlightRain = 61,
-    ModerateRain = 63,
-    HeavyRain = 65,
-    LightFreezingRain = 66,
-    HeavyFreezingRain = 67,
-    SlightSnowfall = 71,
-    ModerateSnowfall = 73,
-    HeavySnowfall = 75,
-    SnowGrains = 77,
-    SlightRainShowers = 80,
-    ModerateRainShowers = 81,
-    ViolentRainShowers = 82,
-    SlightSnowShowers = 85,
-    HeavySnowShowers = 86,
-    Thunderstorms = 95,
-    ThunderstormsWithSlightHail = 96,
-    ThunderstormsWithHeavyHail = 99,
-}
-
 function getWeatherCodeText(code: WeatherCode | number): string | null {
     const item = Object.entries(WeatherCode).find(([k, v]) => v === code)
-    if ( ! item) {
+    if (!item) {
         return null
     }
     return item[0].replaceAll(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()
 }
-//endregion
+// endregion
 
 const userAgent = 'Mozilla/5.0 (compatible; discord-bot/1.0.0)'
 
@@ -93,10 +94,10 @@ export default class WeatherPlugin {
             location: { required: true },
         },
     })
-    public async replyWeather(message: Message<true>, location: string): Promise<any> {
+    async replyWeather(message: Message<true>, location: string): Promise<any> {
         try {
             const geocode = await this.searchGeocode(location)
-            if ( ! geocode) {
+            if (!geocode) {
                 return sendErrorToChannel(message, 'unknown city')
             }
             const { current_weather } = await this.getForecast(geocode.lat, geocode.lon)
@@ -108,22 +109,21 @@ export default class WeatherPlugin {
                 content += `, expect to experience ${condition}`
             }
             return message.reply(content)
-        } catch (e) {
+        } catch {
             return sendGenericErrorToChannel(message)
         }
     }
 
     protected async searchGeocode(location: string): Promise<Geocode | null> {
-        const { data } = await axios.get<Geocode[]>(
-            'https://nominatim.openstreetmap.org/search', {
-                params: {
-                    q: location,
-                    format: 'jsonv2',
-                },
-                headers: {
-                    'User-Agent': userAgent,
-                },
-            })
+        const { data } = await axios.get<Geocode[]>('https://nominatim.openstreetmap.org/search', {
+            params: {
+                q: location,
+                format: 'jsonv2',
+            },
+            headers: {
+                'User-Agent': userAgent,
+            },
+        })
 
         if (data.length === 0) {
             return null
@@ -133,15 +133,14 @@ export default class WeatherPlugin {
     }
 
     protected async getForecast(latitude: string, longitude: string): Promise<Forecast> {
-        const { data } = await axios.get<Forecast>(
-            'https://api.open-meteo.com/v1/forecast', {
-                params: {
-                    latitude,
-                    longitude,
-                    current_weather: true,
-                    format: 'json',
-                },
-            })
+        const { data } = await axios.get<Forecast>('https://api.open-meteo.com/v1/forecast', {
+            params: {
+                latitude,
+                longitude,
+                current_weather: true,
+                format: 'json',
+            },
+        })
 
         return data
     }

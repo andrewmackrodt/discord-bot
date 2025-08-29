@@ -27,11 +27,11 @@ Certain features require setting a third-party API key:
 ## Installation
 
 - Ensure Node 20+ and pnpm are available. If Node is not installed or less than the required version, you can run
-`./setup.sh` which will download a compatible runtime using [nvm](https://github.com/nvm-sh/nvm#about).
+  `./setup.sh` which will download a compatible runtime using [nvm](https://github.com/nvm-sh/nvm#about).
 - Clone the repository and open a terminal in the project directory.
 - Run `pnpm install` to download package dependencies.
 - Copy `.env.sample` to `.env`.
-- If you have an existing discord application you wish to use, set `DISCORD_TOKEN` in `.env`, e.g. `DISCORD_TOKEN=abc`. Otherwise, proceed to the next section. 
+- If you have an existing discord application you wish to use, set `DISCORD_TOKEN` in `.env`, e.g. `DISCORD_TOKEN=abc`. Otherwise, proceed to the next section.
 
 ## Creating an Application for the Bot
 
@@ -63,11 +63,19 @@ Run `pnpm start` to start the bot.
 
 ### Additional Commands
 
-| Command                         | Description                               |
-|---------------------------------|-------------------------------------------|
-| `pnpm run build`                | Compile prod version to `./out`           |
-| `pnpm run lint`                 | Run ESLint                                |
-| `pnpm run lint:fix`             | Run ESLint and attempt fixes              |
-| `pnpm run typeorm -- [options]` | Run TypeORM cli commands                  |
-| `pnpm run start`                | Start the bot                             |
-| `pnpm run watch`                | Start the bot and restart on file changes |
+| Command                         | Description                                               |
+| ------------------------------- | --------------------------------------------------------- |
+| `pnpm run build`                | Build application for dist (path: `out`)                  |
+| `pnpm run build:check`          | Check for type errors                                     |
+| `pnpm run check`                | Run all `*:check` commands                                |
+| `pnpm run clean`                | Remove files created by the `build` command               |
+| `pnpm run format`               | Format code using Prettier                                |
+| `pnpm run format:check`         | Check for Prettier errors                                 |
+| `pnpm run license:check`        | Check for usage of non FOSS licenses in prod dependencies |
+| `pnpm run lint`                 | Format code using ESLint and Prettier                     |
+| `pnpm run lint:check`           | Check for ESLint errors (includes Prettier)               |
+| `pnpm start`                    | Start the application                                     |
+| `pnpm test`                     | Run test suite                                            |
+| `pnpm run typeorm -- [options]` | Run TypeORM cli commands                                  |
+| `pnpm run vulnerability:check`  | Check for CRITICAL vulnerabilities in prod dependencies   |
+| `pnpm run watch`                | Start the application and restart on changes              |

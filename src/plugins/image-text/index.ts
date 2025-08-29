@@ -1,14 +1,15 @@
 import type { Message } from 'discord.js'
 import { AttachmentBuilder } from 'discord.js'
+
 import type { Image } from './functions'
-import { createImage, images, UnknownImageError, TextCountError } from './functions'
+import { createImage, images, TextCountError, UnknownImageError } from './functions'
 import type { Plugin } from '../../../types/plugins'
 import type { CommandArgumentOptions } from '../../registries/Command'
 import { Command } from '../../registries/Command'
 import type { CommandRegistry } from '../../registries/CommandRegistry'
 
 export default class ImageTextPlugin implements Plugin {
-    public async replyWithImage(message: Message<true>, name: string, ...texts: string[]): Promise<any> {
+    async replyWithImage(message: Message<true>, name: string, ...texts: string[]): Promise<any> {
         try {
             const image = await createImage(name, texts)
             const ext = image.name.split('.').pop()
@@ -32,7 +33,7 @@ export default class ImageTextPlugin implements Plugin {
         }
     }
 
-    public doCommandRegistration(registry: CommandRegistry) {
+    doCommandRegistration(registry: CommandRegistry) {
         for (const k in images) {
             this.registerImageCommand(registry, k, images[k])
         }
@@ -43,16 +44,16 @@ export default class ImageTextPlugin implements Plugin {
             .setCommand(name)
             .setDescription(`${image.name.replaceAll('*', '\\*')} meme generator.`)
             .setSeparator(';')
-            .setArgs(function () {
-                const args: Record<string, CommandArgumentOptions> = {}
-                for (let i = 1; i <= image.texts.length; i++) {
-                    const name = image.texts.length === 1
-                        ? 'text'
-                        : `text${i}`
-                    args[name] = { required: true }
-                }
-                return args
-            }())
+            .setArgs(
+                (function () {
+                    const args: Record<string, CommandArgumentOptions> = {}
+                    for (let i = 1; i <= image.texts.length; i++) {
+                        const name = image.texts.length === 1 ? 'text' : `text${i}`
+                        args[name] = { required: true }
+                    }
+                    return args
+                })(),
+            )
             .setHandler((message, ...args) => this.replyWithImage(message, name, ...args))
             .build()
 

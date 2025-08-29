@@ -1,4 +1,5 @@
 import type { Message } from 'discord.js'
+
 import { command, CommandUsageError } from '../../utils/command'
 
 export default class RollPlugin {
@@ -10,14 +11,14 @@ export default class RollPlugin {
             input: { example: '2d10' },
         },
     })
-    public async replyRoll(message: Message<true>, input?: string): Promise<any> {
+    async replyRoll(message: Message<true>, input?: string): Promise<any> {
         let count: number, sides: number
         if (input) {
-            const args = input.split('d').map(s => parseInt(s))
-            if (args.length !== 2 || args.find(n => isNaN(n))) {
+            const args = input.split('d').map((s) => parseInt(s))
+            if (args.length !== 2 || args.find((n) => isNaN(n))) {
                 throw new CommandUsageError('roll', 'use format "2d10" for 2 dice with 10 sides')
             }
-            [count, sides] = args
+            ;[count, sides] = args
             if (10 < count || count < 1) {
                 throw new CommandUsageError('roll', 'count must be between 1 and 10')
             }

@@ -1,10 +1,10 @@
-import { Column, BaseEntity, Entity, PrimaryColumn } from 'typeorm'
+import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm'
 
 @Entity({ name: 'users' })
 export class User extends BaseEntity {
     @PrimaryColumn()
-    public id!: string
+    id!: string
 
     @Column()
-    public name!: string
+    name!: string
 }

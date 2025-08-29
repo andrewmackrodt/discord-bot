@@ -1,5 +1,6 @@
-import type { Message , Channel } from 'discord.js'
+import type { Channel, Message } from 'discord.js'
 import { ChannelType } from 'discord.js'
+
 import type { Command } from '../registries/Command'
 
 export function sendErrorReply(message: Message, text: string): Promise<any> {
@@ -31,10 +32,41 @@ export function success(text: string): string {
     return `:white_check_mark:  ${text}`
 }
 
-export async function replyWithCommandHelp(message: Message, command: Command, err?: string): Promise<Message> {
+export async function replyWithCommandHelp(
+    message: Message,
+    command: Command,
+    err?: string,
+): Promise<Message> {
     const content = formatCommandUsage(command, err)
 
     return message.reply(content)
+}
+
+export async function lookupUserId(
+    channel: Channel,
+    nameOrMention: string,
+): Promise<string | undefined> {
+    if (channel.type !== ChannelType.GuildText) {
+        return
+    }
+
+    const userIdMentionMatch = nameOrMention.match(/^<@([0-9]+)>$/)
+
+    if (userIdMentionMatch) {
+        return userIdMentionMatch[1]
+    }
+
+    const member = channel.members.find(
+        (m) =>
+            m.user.username.localeCompare(nameOrMention, undefined, { sensitivity: 'base' }) ===
+                0 ||
+            m.user.globalName?.localeCompare(nameOrMention, undefined, { sensitivity: 'base' }) ===
+                0,
+    )
+
+    if (member) {
+        return member.id
+    }
 }
 
 function formatCommandUsage(command: Command, err?: string): string {
@@ -79,48 +111,21 @@ function addCommandUsageToBuffer(command: Command, buffer: string[]) {
             str = options.example
         } else {
             str = arg
-            if ( ! options.required) str += '?'
+            if (!options.required) str += '?'
             str = `<${str}>`
         }
         argBuffer.push(str)
     }
-    const separator = typeof command.separator === 'string'
-        ? command.separator  + ' '
-        : ' '
+    const separator = typeof command.separator === 'string' ? command.separator + ' ' : ' '
     lineBuffer.push(argBuffer.join(separator))
     buffer.push(lineBuffer.join(' '))
     buffer.push('')
 }
 
 function findFirst<K extends keyof Command>(command: Command, key: K): Command[K] | undefined {
-    for (
-        let c: Command | undefined = command;
-        typeof c !== 'undefined';
-        c = c.parent
-    ) {
+    for (let c: Command | undefined = command; typeof c !== 'undefined'; c = c.parent) {
         if (typeof c[key] !== 'undefined') {
             return c[key]
         }
-    }
-}
-
-export async function lookupUserId(channel: Channel, nameOrMention: string): Promise<string | undefined> {
-    if (channel.type !== ChannelType.GuildText) {
-        return
-    }
-
-    const userIdMentionMatch = nameOrMention.match(/^<@([0-9]+)>$/)
-
-    if (userIdMentionMatch) {
-        return userIdMentionMatch[1]
-    }
-
-    const member = channel.members.find(m => (
-        m.user.username.localeCompare(nameOrMention, undefined, { sensitivity: 'base' }) === 0 ||
-        m.user.globalName?.localeCompare(nameOrMention, undefined, { sensitivity: 'base' }) === 0
-    ))
-
-    if (member) {
-        return member.id
     }
 }

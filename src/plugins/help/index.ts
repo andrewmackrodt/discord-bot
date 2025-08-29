@@ -1,13 +1,19 @@
-import type { APIEmbedField, Message, Interaction, MessageCreateOptions } from 'discord.js'
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, EmbedBuilder } from 'discord.js'
+import type { APIEmbedField, Interaction, Message, MessageCreateOptions } from 'discord.js'
+import {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonInteraction,
+    ButtonStyle,
+    EmbedBuilder,
+} from 'discord.js'
+
 import { getFieldName } from './utils'
 import type { Plugin } from '../../../types/plugins'
 import type { Command } from '../../registries/Command'
 import type { CommandRegistry } from '../../registries/CommandRegistry'
 import { command } from '../../utils/command'
-import { interaction } from '../../utils/interaction'
+import { interaction, suppressInteractionReply } from '../../utils/interaction'
 import { sendErrorToChannel } from '../../utils/plugin'
-import { suppressInteractionReply } from '../song-of-the-day/helpers'
 
 enum Interactions {
     HelpNext = 'help.next',
@@ -20,6 +26,22 @@ export default class HelpPlugin implements Plugin {
     private _commands?: Command[]
     private _registry?: CommandRegistry
 
+    protected get commands(): Command[] {
+        if (typeof this._commands !== 'undefined') {
+            return this._commands
+        }
+        if (!this._registry) {
+            return []
+        }
+        this._commands = this._registry.list()
+        this._commands.sort((a, b) => a.command.localeCompare(b.command))
+        return this._commands
+    }
+
+    protected get pageCount(): number {
+        return this.commands.length > 0 ? Math.ceil(this.commands.length / PAGE_SIZE) : 0
+    }
+
     @command('help', {
         emoji: ':robot:',
         title: 'Bot Commands',
@@ -28,7 +50,7 @@ export default class HelpPlugin implements Plugin {
             command: {},
         },
     })
-    public async sendHelpMessage(message: Message<true>, command?: string): Promise<any> {
+    async sendHelpMessage(message: Message<true>, command?: string): Promise<any> {
         if (command) {
             return this.sendCommandHelpMessage(message, command)
         }
@@ -37,9 +59,10 @@ export default class HelpPlugin implements Plugin {
             .setTitle(':robot:  Bot Commands')
             .setDescription(
                 'Commands listed with `<>` require arguments, e.g. `.8ball <question>`. A question mark ' +
-                'indicates that the argument is optional, e.g. `.roll <2d10?>`. If the command uses the ' +
-                'syntax `[subcommand]` it requires a subcommand. Use `.help command` for additional usage ' +
-                'instructions, e.g. `.help faq`.\n---')
+                    'indicates that the argument is optional, e.g. `.roll <2d10?>`. If the command uses the ' +
+                    'syntax `[subcommand]` it requires a subcommand. Use `.help command` for additional usage ' +
+                    'instructions, e.g. `.help faq`.\n---',
+            )
             .setFields(this.getPageFields())
 
         const options: MessageCreateOptions = { embeds: [embed] }
@@ -67,10 +90,8 @@ export default class HelpPlugin implements Plugin {
 
     @interaction(Interactions.HelpNext)
     @interaction(Interactions.HelpPrev)
-    public async changePageInteraction(interaction: Interaction): Promise<void> {
-        if ( ! (interaction instanceof ButtonInteraction) ||
-            ! interaction.message.inGuild()
-        ) {
+    async changePageInteraction(interaction: Interaction): Promise<void> {
+        if (!(interaction instanceof ButtonInteraction) || !interaction.message.inGuild()) {
             return
         }
 
@@ -78,7 +99,7 @@ export default class HelpPlugin implements Plugin {
         const pageStr = /page:? ([0-9]+)/i.exec(embed.footer?.text ?? '')?.[1]
         let page: number
 
-        if ( ! pageStr || isNaN((page = parseInt(pageStr)))) {
+        if (!pageStr || isNaN((page = parseInt(pageStr)))) {
             return
         }
 
@@ -107,10 +128,14 @@ export default class HelpPlugin implements Plugin {
         void suppressInteractionReply(interaction)
     }
 
+    doCommandRegistration(registry: CommandRegistry) {
+        this._registry = registry
+    }
+
     protected sendCommandHelpMessage(message: Message<true>, name: string) {
         const command = this._registry?.get(name)
 
-        if ( ! command) {
+        if (!command) {
             return sendErrorToChannel(message, `unknown command ${name}`)
         }
 
@@ -139,35 +164,15 @@ export default class HelpPlugin implements Plugin {
     }
 
     protected getCommandsFields(commands: Command[]): APIEmbedField[] {
-        return commands.map(command => ({
+        return commands.map((command) => ({
             name: getFieldName(command),
             inline: true,
             value: command.description?.replace(/[\s.]+$/, '').toLowerCase() ?? 'n/a',
         }))
     }
 
-    protected getPageFields(page: number = 1): APIEmbedField[] {
+    protected getPageFields(page = 1): APIEmbedField[] {
         const start = (page - 1) * PAGE_SIZE
         return this.getCommandsFields(this.commands.slice(start, start + PAGE_SIZE))
-    }
-
-    public doCommandRegistration(registry: CommandRegistry) {
-        this._registry = registry
-    }
-
-    protected get commands(): Command[] {
-        if (typeof this._commands !== 'undefined') {
-            return this._commands
-        }
-        if ( ! this._registry) {
-            return []
-        }
-        this._commands = this._registry.list()
-        this._commands.sort((a, b) => a.command.localeCompare(b.command))
-        return this._commands
-    }
-
-    protected get pageCount(): number {
-        return this.commands.length > 0 ? Math.ceil(this.commands.length / PAGE_SIZE) : 0
     }
 }

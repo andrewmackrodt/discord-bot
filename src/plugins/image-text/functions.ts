@@ -1,4 +1,5 @@
 import path from 'node:path'
+
 import { subClass } from 'gm'
 
 const gm = subClass({ imageMagick: true })
@@ -6,21 +7,6 @@ const assetsPath = path.resolve(__dirname, 'assets')
 const fontsPath = path.resolve(assetsPath, 'fonts')
 const defaultFont = path.resolve(fontsPath, 'Impact/impact.ttf')
 const imagesPath = path.resolve(assetsPath, 'images')
-
-export class UnknownImageError extends Error {
-}
-
-export class TextCountError extends Error {
-    public constructor(
-        public readonly expected: number,
-    ) {
-        super(`Image requires ${expected} arguments`)
-    }
-}
-
-type TextPosition = { w: number; h: number } & (
-    { x: number; y: number; gravity?: string } |
-    { gravity?: string } )
 
 export interface Image {
     name: string
@@ -33,10 +19,23 @@ export interface Image {
     texts: TextPosition[]
 }
 
+type TextPosition = { w: number; h: number } & (
+    | { x: number; y: number; gravity?: string }
+    | { gravity?: string }
+)
+
 interface CreateImageResult {
     data: Buffer
     contentType: string
     name: string
+}
+
+export class UnknownImageError extends Error {}
+
+export class TextCountError extends Error {
+    constructor(readonly expected: number) {
+        super(`Image requires ${expected} arguments`)
+    }
 }
 
 export const images: Record<string, Image> = {
@@ -105,25 +104,26 @@ const getPointSize = (
     font: string,
     stroke: boolean,
     text: string,
-) => new Promise<number>((resolve, reject) => {
-    let state = gm(dimensions.w, dimensions.h)
-        .font(font)
-        .out(`caption:${text}`)
-        .out('-format', '%[caption:pointsize]')
-    if (stroke) {
-        state = state.strokeWidth(1)
-    }
-    state.write('info:', (err, stdout) => {
-        if (err) {
-            return reject(err)
-        } else {
-            resolve(Number(stdout))
+) =>
+    new Promise<number>((resolve, reject) => {
+        let state = gm(dimensions.w, dimensions.h)
+            .font(font)
+            .out(`caption:${text}`)
+            .out('-format', '%[caption:pointsize]')
+        if (stroke) {
+            state = state.strokeWidth(1)
         }
+        state.write('info:', (err, stdout) => {
+            if (err) {
+                return reject(err)
+            } else {
+                resolve(Number(stdout))
+            }
+        })
     })
-})
 
 export async function createImage(name: string, texts: string[]): Promise<CreateImageResult> {
-    if ( ! (name in images)) {
+    if (!(name in images)) {
         throw new UnknownImageError()
     }
 
@@ -134,13 +134,15 @@ export async function createImage(name: string, texts: string[]): Promise<Create
     }
 
     const pointSize = await Promise.all(
-        image.texts.map((dimensions, i) => getPointSize(
-            dimensions,
-            image.font ?? defaultFont,
-            typeof image.stroke === 'string',
-            texts[i],
-        )))
-        .then(arr => arr.sort((a, b) => a - b).at(0)!)
+        image.texts.map((dimensions, i) =>
+            getPointSize(
+                dimensions,
+                image.font ?? defaultFont,
+                typeof image.stroke === 'string',
+                texts[i],
+            ),
+        ),
+    ).then((arr) => arr.sort((a, b) => a - b).at(0)!)
 
     const srcImagePath = path.resolve(imagesPath, image.filename)
 
@@ -175,13 +177,15 @@ export async function createImage(name: string, texts: string[]): Promise<Create
                 .out(`caption:${texts[i]}`)
         }
         state = state
-            .out(...(() => {
-                if ( ! ('x' in position)) return []
-                const { x, y } = position
-                const xs = x >= 0 ? `+${x}` : `${x}`
-                const ys = y >= 0 ? `+${y}` : `${y}`
-                return ['-geometry', [xs, ys].join('')]
-            })())
+            .out(
+                ...(() => {
+                    if (!('x' in position)) return []
+                    const { x, y } = position
+                    const xs = x >= 0 ? `+${x}` : `${x}`
+                    const ys = y >= 0 ? `+${y}` : `${y}`
+                    return ['-geometry', [xs, ys].join('')]
+                })(),
+            )
             .out('-gravity', position.gravity ?? 'northwest')
         if (format === 'gif') {
             state = state.out('-compose', 'over').out('-layers', 'composite')

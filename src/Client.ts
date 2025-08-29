@@ -1,31 +1,50 @@
-import type { Message, MessageReaction, PartialUser, User, PartialMessageReaction, Interaction } from 'discord.js'
+import type {
+    Interaction,
+    Message,
+    MessageReaction,
+    PartialMessageReaction,
+    PartialUser,
+    User,
+} from 'discord.js'
 import Discord, { GatewayIntentBits } from 'discord.js'
+
 import { dataSource } from './db'
 import type { Command } from './registries/Command'
 import { CommandRegistry } from './registries/CommandRegistry'
 import { InteractionRegistry } from './registries/InteractionRegistry'
 import { Schedule } from './Schedule'
-import { CommandUsageError, ConfigurationError, registerCommandsFromDecorators } from './utils/command'
+import {
+    CommandUsageError,
+    ConfigurationError,
+    registerCommandsFromDecorators,
+} from './utils/command'
 import { registerInteractionsFromDecorators } from './utils/interaction'
 import { replyWithCommandHelp, sendErrorReply } from './utils/plugin'
 import { split } from './utils/string'
 import type { NextFunction, Plugin } from '../types/plugins'
 
-type PluginEvent = 'onMessage' | 'onMessageReactionAdd' | 'onMessageReactionRemove' | 'onInteraction'
+type PluginEvent =
+    | 'onMessage'
+    | 'onMessageReactionAdd'
+    | 'onMessageReactionRemove'
+    | 'onInteraction'
 
 type PluginHasEvent<T extends PluginEvent> = Required<Pick<Plugin, T>>
 
 type FilterNextFunction<T extends unknown[]> = T extends [...infer H, infer R]
-    ? R extends NextFunction ? [...H] : [T]
+    ? R extends NextFunction
+        ? [...H]
+        : [T]
     : [T]
 
-type PluginEventParameters<T extends PluginEvent>
-    = FilterNextFunction<Parameters<Exclude<PluginHasEvent<T>[T], undefined>>>
+type PluginEventParameters<T extends PluginEvent> = FilterNextFunction<
+    Parameters<Exclude<PluginHasEvent<T>[T], undefined>>
+>
 
 type ErrorType = Error | string
 
 export class Client {
-    protected readonly allowBotUserIds: Set<string> = new Set()
+    protected readonly allowBotUserIds = new Set<string>()
     protected readonly client: Discord.Client
     protected readonly commandRegistry: CommandRegistry
     protected readonly interactionRegistry: InteractionRegistry
@@ -38,7 +57,7 @@ export class Client {
         onInteraction: [],
     }
 
-    public constructor(
+    constructor(
         protected readonly token: string,
         protected readonly plugins: Plugin[],
     ) {
@@ -53,9 +72,9 @@ export class Client {
 
         if ('ALLOW_BOT_USER_IDS' in process.env && process.env.ALLOW_BOT_USER_IDS) {
             process.env.ALLOW_BOT_USER_IDS.split(/[,:]/)
-                .map(id => id.trim())
-                .filter(id => id.match(/^[0-9]+$/))
-                .forEach(id => this.allowBotUserIds.add(id))
+                .map((id) => id.trim())
+                .filter((id) => id.match(/^[0-9]+$/))
+                .forEach((id) => this.allowBotUserIds.add(id))
         }
 
         this.commandRegistry = new CommandRegistry()
@@ -68,15 +87,12 @@ export class Client {
             'onInteraction',
         ]
 
-        for (const plugin of plugins)
-        for (const e of events) {
-            if (plugin[e]) {
-                this.eventHandlers[e].push(plugin)
-            }
-        }
+        plugins.forEach((plugin) =>
+            events.filter((e) => plugin[e]).forEach((e) => this.eventHandlers[e].push(plugin)),
+        )
     }
 
-    public async start(): Promise<void> {
+    async start(): Promise<void> {
         // gracefully close connections on exit
         process.on('SIGINT', this.cleanup)
         process.on('SIGTERM', this.cleanup)
@@ -94,12 +110,15 @@ export class Client {
 
         // assign handler functions
         this.client.on('error', this.onError)
-        this.client.on('ready', this.onReady)
+        this.client.on('clientReady', this.onClientReady)
 
         if (this.eventHandlers['onMessage']) this.client.on('messageCreate', this.onMessage)
-        if (this.eventHandlers['onMessageReactionAdd']) this.client.on('messageReactionAdd', this.onMessageReactionAdd)
-        if (this.eventHandlers['onMessageReactionRemove']) this.client.on('messageReactionRemove', this.onMessageReactionRemove)
-        if (this.eventHandlers['onInteraction']) this.client.on('interactionCreate', this.onInteraction)
+        if (this.eventHandlers['onMessageReactionAdd'])
+            this.client.on('messageReactionAdd', this.onMessageReactionAdd)
+        if (this.eventHandlers['onMessageReactionRemove'])
+            this.client.on('messageReactionRemove', this.onMessageReactionRemove)
+        if (this.eventHandlers['onInteraction'])
+            this.client.on('interactionCreate', this.onInteraction)
 
         // connect to discord
         await this.client.login(this.token)
@@ -131,11 +150,11 @@ export class Client {
         console.error(error)
     }
 
-    protected onReady = async (): Promise<void> => {
+    protected onClientReady = async (): Promise<void> => {
         console.info(`Logged in as ${this.client.user!.tag}!`)
 
         for (const plugin of this.plugins) {
-            if ( ! plugin.onConnect) {
+            if (!plugin.onConnect) {
                 continue
             }
 
@@ -143,7 +162,7 @@ export class Client {
         }
 
         for (const plugin of this.plugins) {
-            if ( ! plugin.registerScheduler) {
+            if (!plugin.registerScheduler) {
                 continue
             }
 
@@ -158,21 +177,24 @@ export class Client {
         for (const plugin of this.eventHandlers[event]) {
             let isNext = false
             // @ts-expect-error TS2556
-            await plugin[event]!(...args, err => {
-                if ( ! err) {
+            await plugin[event]!(...args, (err) => {
+                if (!err) {
                     isNext = true
                 } else {
                     console.error(err)
                 }
             })
-            if ( ! isNext) {
+            if (!isNext) {
                 break
             }
         }
     }
 
     protected onMessage = async (message: Message): Promise<void> => {
-        if ((message.author.bot && ! this.allowBotUserIds.has(message.author.id)) || ! message.inGuild()) {
+        if (
+            (message.author.bot && !this.allowBotUserIds.has(message.author.id)) ||
+            !message.inGuild()
+        ) {
             return
         }
 
@@ -193,13 +215,13 @@ export class Client {
     protected tryHandleCommand = async (message: Message<true>): Promise<boolean> => {
         const match = message.content.match(/^[#!.-]([a-z0-9][a-z0-9_-]+)\b/i)
 
-        if ( ! match) {
+        if (!match) {
             return false
         }
 
         let command = this.commandRegistry.get(match[1]) as Command
 
-        if ( ! command) {
+        if (!command) {
             return false
         }
 
@@ -208,14 +230,14 @@ export class Client {
         while (Object.keys(command!.subcommands).length > 0) {
             const word = content.split(/\s/, 1)[0]
 
-            if ( ! word) {
+            if (!word) {
                 void replyWithCommandHelp(message, command, 'missing subcommand')
                 return true
             }
 
             const subcommand = command.subcommands[word]
 
-            if ( ! subcommand) {
+            if (!subcommand) {
                 if (Object.keys(command.args).length === 0) {
                     void replyWithCommandHelp(message, command, `unknown subcommand "${word}"`)
                     return true
@@ -227,7 +249,7 @@ export class Client {
             content = content.replace(/^\S+\s*/, '')
         }
 
-        const minArgsLength = Object.values(command.args).filter(a => a.required).length
+        const minArgsLength = Object.values(command.args).filter((a) => a.required).length
         const maxArgsLength = Object.keys(command.args).length
         let args: string[] = []
 
@@ -237,7 +259,10 @@ export class Client {
                     const limit = maxArgsLength - 1
                     args = split(content, command.separator, limit)
                 } else {
-                    args = content.split(command.separator).map(s => s.trim()).filter(s => s.length > 0)
+                    args = content
+                        .split(command.separator)
+                        .map((s) => s.trim())
+                        .filter((s) => s.length > 0)
                 }
             } else {
                 args.push(content.trim())
@@ -254,12 +279,10 @@ export class Client {
         } catch (e) {
             if (e instanceof CommandUsageError) {
                 void replyWithCommandHelp(message, command, e.message)
-            }
-            else if (e instanceof ConfigurationError) {
+            } else if (e instanceof ConfigurationError) {
                 const text = e.message || 'the command failed due to a configuration error'
                 void sendErrorReply(message, text)
-            }
-            else {
+            } else {
                 throw e
             }
         }
@@ -271,7 +294,7 @@ export class Client {
         reaction: MessageReaction | PartialMessageReaction,
         user: User | PartialUser,
     ): Promise<void> => {
-        if ((user.bot && ! this.allowBotUserIds.has(user.id)) || ! reaction.message.inGuild()) {
+        if ((user.bot && !this.allowBotUserIds.has(user.id)) || !reaction.message.inGuild()) {
             return
         }
 
@@ -282,7 +305,7 @@ export class Client {
         reaction: MessageReaction | PartialMessageReaction,
         user: User | PartialUser,
     ): Promise<void> => {
-        if ((user.bot && ! this.allowBotUserIds.has(user.id)) || ! reaction.message.inGuild()) {
+        if ((user.bot && !this.allowBotUserIds.has(user.id)) || !reaction.message.inGuild()) {
             return
         }
 
@@ -290,7 +313,10 @@ export class Client {
     }
 
     protected onInteraction = async (interaction: Interaction): Promise<void> => {
-        if ((interaction.user.bot && ! this.allowBotUserIds.has(interaction.user.id)) || ! interaction.inGuild()) {
+        if (
+            (interaction.user.bot && !this.allowBotUserIds.has(interaction.user.id)) ||
+            !interaction.inGuild()
+        ) {
             return
         }
 
@@ -325,7 +351,7 @@ export class Client {
     }
 
     private doExtensionRegistration(plugin: Plugin) {
-        if ( ! plugin.getExtensions) {
+        if (!plugin.getExtensions) {
             return
         }
 

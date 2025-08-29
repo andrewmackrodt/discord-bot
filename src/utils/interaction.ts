@@ -1,3 +1,5 @@
+import type { ButtonInteraction } from 'discord.js'
+
 import { Interaction } from '../registries/Interaction'
 import type { InteractionRegistry } from '../registries/InteractionRegistry'
 
@@ -11,7 +13,7 @@ const registered: Record<string, DecoratorRegistration[]> = {}
 export function interaction(interaction: string) {
     return <T extends object>(target: T, propertyKey: keyof T, descriptor: PropertyDescriptor) => {
         const name = target.constructor.name
-        if ( ! (name in registered)) {
+        if (!(name in registered)) {
             registered[name] = []
         }
         registered[name].push({
@@ -24,7 +26,7 @@ export function interaction(interaction: string) {
 export function registerInteractionsFromDecorators<T>(registry: InteractionRegistry, instance: T) {
     const cname = Object.getPrototypeOf(instance).constructor.name
 
-    if (! (cname in registered)) {
+    if (!(cname in registered)) {
         return
     }
 
@@ -42,10 +44,19 @@ export function registerInteractionsFromDecorators<T>(registry: InteractionRegis
         if (registry.get(reg.interaction)) {
             console.error(
                 `interaction registration error: "${reg.interaction}" is already registered` +
-                `; registration from ${cname} will be ignored`)
+                    `; registration from ${cname} will be ignored`,
+            )
             continue
         }
 
         registry.add(createInteractionFromDecorator(reg.interaction, reg.method))
+    }
+}
+
+export async function suppressInteractionReply(interaction: ButtonInteraction) {
+    try {
+        await interaction.deferUpdate()
+    } catch {
+        // todo log the caught error
     }
 }

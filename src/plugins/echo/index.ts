@@ -1,4 +1,5 @@
 import type { Message } from 'discord.js'
+
 import { command } from '../../utils/command'
 
 export default class EchoPlugin {
@@ -11,7 +12,7 @@ export default class EchoPlugin {
             text: { required: true },
         },
     })
-    public async sendMessageToChannel(message: Message<true>, text: string): Promise<any> {
+    async sendMessageToChannel(message: Message<true>, text: string): Promise<any> {
         return message.channel.send(text)
     }
 }

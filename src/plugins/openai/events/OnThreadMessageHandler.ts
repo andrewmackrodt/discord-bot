@@ -1,20 +1,20 @@
 import type { Message } from 'discord.js'
 import type { ChatCompletionMessageParam } from 'openai/resources/chat'
 import { injectable } from 'tsyringe'
+
 import type { NextFunction, Plugin } from '../../../../types/plugins'
 import { OpenAIService } from '../services/OpenAIService'
 
 @injectable()
 export class OnThreadMessageHandler implements Plugin {
-    public constructor(
-        private readonly openai: OpenAIService,
-    ) {
-    }
+    constructor(private readonly openai: OpenAIService) {}
 
-    public async onMessage(message: Message<true>, next: NextFunction): Promise<any> {
-        const isConversationThread = message.channel.isThread() && Boolean(message.channel.name.match(/^(?:ask|chat)-?gpt\b/i))
+    async onMessage(message: Message<true>, next: NextFunction): Promise<any> {
+        const isConversationThread =
+            message.channel.isThread() &&
+            Boolean(message.channel.name.match(/^(?:ask|chat)-?gpt\b/i))
 
-        if ( ! isConversationThread) {
+        if (!isConversationThread) {
             return next()
         }
 
@@ -22,7 +22,7 @@ export class OnThreadMessageHandler implements Plugin {
         const messages = await message.channel.messages.fetch({ before: message.id, limit: 9 })
         const prompts: ChatCompletionMessageParam[] = []
 
-        messages.reverse().forEach(m => {
+        messages.reverse().forEach((m) => {
             if (m.system) {
                 return
             }
@@ -32,7 +32,7 @@ export class OnThreadMessageHandler implements Plugin {
             }
             let role: 'assistant' | 'user'
             if (m.author.bot) {
-                if (m.author.id !== message.client.user.id || ! content.startsWith('Answer: ')) {
+                if (m.author.id !== message.client.user.id || !content.startsWith('Answer: ')) {
                     return
                 }
                 content = content.substring(8)

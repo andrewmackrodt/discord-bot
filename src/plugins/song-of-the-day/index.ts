@@ -1,5 +1,6 @@
 import type Discord from 'discord.js'
 import { injectable } from 'tsyringe'
+
 import SongOfTheDayAddCommand from './commands/SongOfTheDayAddCommand'
 import SongOfTheDayExportCommand from './commands/SongOfTheDayExportCommand'
 import SongOfTheDayHistoryCommand from './commands/SongOfTheDayHistoryCommand'
@@ -15,7 +16,7 @@ import { isWorkingDay } from '../../utils/date'
 
 @injectable()
 export default class SongOfTheDayPlugin implements Plugin {
-    public constructor(
+    constructor(
         private readonly notificationService: SongOfTheDayNotificationService,
         private readonly add: SongOfTheDayAddCommand,
         private readonly exportCommand: SongOfTheDayExportCommand,
@@ -24,10 +25,9 @@ export default class SongOfTheDayPlugin implements Plugin {
         private readonly nominations: SongOfTheDayNominationsCommand,
         private readonly random: SongOfTheDayRandomCommand,
         private readonly stats: SongOfTheDayStatsCommand,
-    ) {
-    }
+    ) {}
 
-    public getExtensions() {
+    getExtensions() {
         return [
             this.add,
             this.exportCommand,
@@ -39,20 +39,23 @@ export default class SongOfTheDayPlugin implements Plugin {
         ]
     }
 
-    public doCommandRegistration(registry: CommandRegistry) {
-        registry.add('sotd', builder => builder
-            .setEmoji(':notepad_spiral:')
-            .setTitle('Song of the Day')
-            .setDescription('Song of the Day plugin.')
-            .build())
+    doCommandRegistration(registry: CommandRegistry) {
+        registry.add('sotd', (builder) =>
+            builder
+                .setEmoji(':notepad_spiral:')
+                .setTitle('Song of the Day')
+                .setDescription('Song of the Day plugin.')
+                .build(),
+        )
     }
 
-    public registerScheduler(client: Discord.Client, schedule: Schedule) {
+    registerScheduler(client: Discord.Client, schedule: Schedule) {
         schedule.add('* * * * *', async () => {
             const now = new Date()
 
             // only run tasks on working days between 10am and 6pm
-            if ( ! isWorkingDay(now) ||
+            if (
+                !isWorkingDay(now) ||
                 now.getHours() < SongOfTheDayNotificationService.NOTIFICATION_PICK_HOUR ||
                 now.getHours() > SongOfTheDayNotificationService.NOTIFICATION_STOP_HOUR
             ) {

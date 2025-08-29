@@ -1,15 +1,13 @@
 import type { Message } from 'discord.js'
 import type { ChatCompletionMessageParam } from 'openai/resources/chat'
 import { injectable } from 'tsyringe'
+
 import { command } from '../../../utils/command'
 import { OpenAIService } from '../services/OpenAIService'
 
 @injectable()
 export default class AskCommand {
-    public constructor(
-        private readonly openai: OpenAIService,
-    ) {
-    }
+    constructor(private readonly openai: OpenAIService) {}
 
     @command('ask', {
         emoji: ':robot:',
@@ -20,7 +18,7 @@ export default class AskCommand {
             question: { required: true },
         },
     })
-    public async ask(message: Message<true>, question: string) {
+    async ask(message: Message<true>, question: string) {
         const prompts: ChatCompletionMessageParam[] = []
         prompts.push({ role: 'user', content: question })
 

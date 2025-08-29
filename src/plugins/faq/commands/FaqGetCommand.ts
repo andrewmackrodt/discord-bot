@@ -1,15 +1,13 @@
-import type { APIEmbed , Message } from 'discord.js'
+import type { APIEmbed, Message } from 'discord.js'
 import { injectable } from 'tsyringe'
+
 import { command } from '../../../utils/command'
 import { error, lookupUserId, sendErrorReply } from '../../../utils/plugin'
 import { FaqRepository } from '../repositories/FaqRepository'
 
 @injectable()
 export default class FaqGetCommand {
-    public constructor(
-        private readonly repository: FaqRepository,
-    ) {
-    }
+    constructor(private readonly repository: FaqRepository) {}
 
     @command('faq get', {
         description: 'Get a FAQ.',
@@ -18,9 +16,9 @@ export default class FaqGetCommand {
             recipient: {},
         },
     })
-    public async getFaq(message: Message<true>, name: string, recipient?: string): Promise<Message> {
+    async getFaq(message: Message<true>, name: string, recipient?: string): Promise<Message> {
         const faq = await this.repository.getFaq(message.guildId, name)
-        if ( ! faq) {
+        if (!faq) {
             return message.reply(error(`faq not found: **${name}**`))
         }
 
@@ -37,7 +35,7 @@ export default class FaqGetCommand {
 
         if (recipient) {
             recipientId = await lookupUserId(message.channel, recipient)
-            if ( ! recipientId) {
+            if (!recipientId) {
                 return sendErrorReply(message, `unknown user: ${recipient}`)
             }
 

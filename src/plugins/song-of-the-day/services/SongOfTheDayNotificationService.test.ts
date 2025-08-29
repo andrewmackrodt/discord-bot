@@ -1,6 +1,7 @@
 import type { Guild, GuildBasedChannel } from 'discord.js'
 import { ChannelType } from 'discord.js'
-import { mock, when, It, UnexpectedProperty } from 'strong-mock'
+import { It, mock, UnexpectedProperty, when } from 'strong-mock'
+
 import { SongOfTheDayNotificationService } from './SongOfTheDayNotificationService'
 import type { SongOfTheDaySettings } from '../models/SongOfTheDaySettings'
 import type { SongOfTheDayRepository } from '../repositories/SongOfTheDayRepository'
@@ -21,12 +22,18 @@ describe('sendNotifications()', () => {
 
     function assertSotdPendingForChannelType(type: ChannelType.GuildText | ChannelType.GuildVoice) {
         when(() => mockRepository.getServerSettings(It.isAny())).thenResolve(mockSettings)
-        when(() => mockSettings.notificationsChannelId).thenReturn('ch').anyTimes()
-        when(() => mockRepository.serverContainsSongOfTheDayOnDate(It.isAny(), It.isAny())).thenResolve(false)
+        when(() => mockSettings.notificationsChannelId)
+            .thenReturn('ch')
+            .anyTimes()
+        when(() =>
+            mockRepository.serverContainsSongOfTheDayOnDate(It.isAny(), It.isAny()),
+        ).thenResolve(false)
         const mockChannel = mock<GuildBasedChannel>()
         const mockCache = mockChannelsCache()
         when(() => mockCache.get(It.isAny())).thenReturn(mockChannel)
-        when(() => mockChannel.type).thenReturn(type).anyTimes()
+        when(() => mockChannel.type)
+            .thenReturn(type)
+            .anyTimes()
         return mockChannel
     }
 
@@ -45,8 +52,12 @@ describe('sendNotifications()', () => {
 
     it('sends nothing when sotd not empty', async () => {
         when(() => mockRepository.getServerSettings(It.isAny())).thenResolve(mockSettings)
-        when(() => mockSettings.notificationsChannelId).thenReturn('ch').anyTimes()
-        when(() => mockRepository.serverContainsSongOfTheDayOnDate(It.isAny(), It.isAny())).thenResolve(true)
+        when(() => mockSettings.notificationsChannelId)
+            .thenReturn('ch')
+            .anyTimes()
+        when(() =>
+            mockRepository.serverContainsSongOfTheDayOnDate(It.isAny(), It.isAny()),
+        ).thenResolve(true)
         await notificationService.sendNotifications(mockGuild)
     })
 

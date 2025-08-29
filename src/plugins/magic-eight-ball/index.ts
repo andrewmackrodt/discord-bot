@@ -1,4 +1,5 @@
 import type { Message } from 'discord.js'
+
 import { command } from '../../utils/command'
 
 const answers = [
@@ -20,7 +21,7 @@ const answers = [
     'Cannot predict now',
     'Concentrate and ask again',
     // negative
-    'Don\'t count on it',
+    "Don't count on it",
     'My reply is no',
     'My sources say no',
     'Outlook not so good',
@@ -37,7 +38,8 @@ export default class MagicEightBallPlugin {
             question: { required: true },
         },
     })
-    public async replyFortune(message: Message<true>, question: string): Promise<any> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async replyFortune(message: Message<true>, question: string): Promise<any> {
         const index = Math.floor(Math.random() * answers.length)
         const answer = answers[index]
         return message.reply(`:8ball: ${answer}`)

@@ -1,4 +1,5 @@
 import type { Message } from 'discord.js'
+
 import { builder } from '../utils/builder'
 import type { Builder, BuilderWithArgs } from '../utils/builder'
 
@@ -22,27 +23,28 @@ export interface CommandArgumentOptions {
 
 export type CommandBuilderWithCommand = BuilderWithArgs<CommandOptions, typeof Command, 'command'>
 
-type CommandHandler = (message: Message<true>, ...args: string[]) => Promise<any>
-
 export type Subcommand = Command & Required<Pick<Command, 'parent'>>
 
-export class Command {
-    public readonly parent?: Command
-    public readonly command: string
-    public readonly emoji?: string
-    public readonly title?: string
-    public readonly description?: string
-    public readonly separator: string | RegExp | null
-    public readonly lastArgIsText: boolean
-    public readonly args: Record<string, CommandArgumentOptions>
-    public handler?: CommandHandler
-    public readonly subcommands: Record<string, Subcommand>
+type CommandHandler = (message: Message<true>, ...args: string[]) => Promise<any>
 
-    public static builder<T>(): Builder<CommandOptions, typeof Command> {
+export class Command {
+    static builder(): Builder<CommandOptions, typeof Command> {
         return builder<CommandOptions, typeof Command>(Command)
     }
 
-    public constructor(options: CommandOptions) {
+    readonly parent?: Command
+    readonly command: string
+    readonly emoji?: string
+    readonly title?: string
+    readonly description?: string
+    readonly separator: string | RegExp | null
+    readonly lastArgIsText: boolean
+    readonly args: Record<string, CommandArgumentOptions>
+    readonly subcommands: Record<string, Subcommand>
+
+    handler?: CommandHandler
+
+    constructor(options: CommandOptions) {
         this.parent = options?.parent
         this.command = options.command
         this.emoji = options?.emoji
@@ -55,20 +57,15 @@ export class Command {
         this.subcommands = options?.subcommands ?? {}
     }
 
-    public get fullCommand(): string {
+    get fullCommand(): string {
         const commands: string[] = []
-        for (
-            // eslint-disable-next-line @typescript-eslint/no-this-alias
-            let c: Command | undefined = this;
-            typeof c !== 'undefined';
-            c = c.parent
-        ) {
+        for (let c: Command | undefined = this; typeof c !== 'undefined'; c = c.parent) {
             commands.push(c.command)
         }
         return commands.reverse().join(' ')
     }
 
-    public execute(message: Message<true>, args: string[]): Promise<any> {
+    execute(message: Message<true>, args: string[]): Promise<any> {
         return this.handler!(message, ...args)
     }
 }

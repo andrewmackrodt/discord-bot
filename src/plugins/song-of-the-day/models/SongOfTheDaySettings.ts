@@ -1,4 +1,4 @@
-import { Column, BaseEntity, Entity, PrimaryColumn } from 'typeorm'
+import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm'
 
 export enum NotificationEventType {
     PICK = 'pick',
@@ -8,26 +8,26 @@ export enum NotificationEventType {
 @Entity({ name: 'sotd_settings' })
 export class SongOfTheDaySettings extends BaseEntity {
     @PrimaryColumn({ name: 'server_id' })
-    public serverId!: string
+    serverId!: string
 
     @Column({ name: 'spotify_client_id' })
-    public spotifyClientId!: string
+    spotifyClientId!: string
 
     @Column({ name: 'spotify_client_secret' })
-    public spotifyClientSecret!: string
+    spotifyClientSecret!: string
 
     @Column({ name: 'spotify_refresh_token' })
-    public spotifyRefreshToken!: string
+    spotifyRefreshToken!: string
 
     @Column({ name: 'spotify_playlist_id' })
-    public spotifyPlaylistId!: string
+    spotifyPlaylistId!: string
 
     @Column({ name: 'notifications_channel_id', nullable: true })
-    public notificationsChannelId?: string
+    notificationsChannelId?: string
 
     @Column({ name: 'notifications_last_event_type', nullable: true })
-    public notificationsLastEventType?: NotificationEventType
+    notificationsLastEventType?: NotificationEventType
 
     @Column({ name: 'notifications_last_event_time', nullable: true })
-    public notificationsLastEventTime?: string
+    notificationsLastEventTime?: string
 }

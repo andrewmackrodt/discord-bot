@@ -1,9 +1,9 @@
-import type { ButtonComponent , Interaction, Message } from 'discord.js'
+import type { ButtonComponent, Interaction, Message } from 'discord.js'
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js'
 import { injectable } from 'tsyringe'
+
 import { command } from '../../../utils/command'
-import { interaction } from '../../../utils/interaction'
-import { suppressInteractionReply } from '../../song-of-the-day/helpers'
+import { interaction, suppressInteractionReply } from '../../../utils/interaction'
 import { OpenAIService } from '../services/OpenAIService'
 
 const format = `At least one paragraph to advance the story, using 250 words or less.
@@ -11,15 +11,17 @@ const format = `At least one paragraph to advance the story, using 250 words or 
 [1]: decision one in less than 50 characters
 [2]: decision two in less than 50 characters`
 
-const constraint = `
+const constraint =
+    `
     This is an interactive text adventure. You must slowly advance the story in every response using paragraphs. Use no
     more than 250 words to do this. Additionally, present 2 to 4 realistic choices on how to continue the story. Each
     choice must be less than 50 characters. Respond using the format:
     `
         .trim()
         .replaceAll(/^[ \t]+/gm, '')
-        .replaceAll('\n', ' ')
-    + '\n\n' + format
+        .replaceAll('\n', ' ') +
+    '\n\n' +
+    format
 
 const template = 'Create a new story about {{ topic }}.'
 
@@ -41,9 +43,9 @@ function parseCompletionResponse(text: string): StoryChoicesResponse {
     const lines = text.trim().split('\n')
     const choices: string[] = []
     let i = lines.length - 1
-    for ( ; i >= 0; i--) {
+    for (; i >= 0; i--) {
         const match = lines[i].trim().match(/^\[\d\]: (.+)/)
-        if ( ! match) {
+        if (!match) {
             break
         }
         choices.push(match[1])
@@ -58,12 +60,9 @@ function parseCompletionResponse(text: string): StoryChoicesResponse {
 
 @injectable()
 export default class CyaCommand {
-    private readonly processing: Set<string> = new Set()
+    private readonly processing = new Set<string>()
 
-    public constructor(
-        private readonly openai: OpenAIService,
-    ) {
-    }
+    constructor(private readonly openai: OpenAIService) {}
 
     @command('cya', {
         emoji: ':notepad_spiral:',
@@ -74,36 +73,40 @@ export default class CyaCommand {
             topic: { required: true },
         },
     })
-    public async createAdventure(message: Message<true>, topic: string) {
+    async createAdventure(message: Message<true>, topic: string) {
         const userInput = template.replaceAll('{{ topic }}', topic.replace(/\.$/, ''))
         const res = await this.openai.getChatCompletionAndStartReply(message, [
             { role: 'system', content: constraint },
             { role: 'user', content: userInput },
         ])
-        if ( ! res) {
+        if (!res) {
             return
         }
         const { reply, content } = res
         const { story, choices } = parseCompletionResponse(content)
-        return reply.then(reply => reply.edit({
-            content: story,
-            components: [
-                new ActionRowBuilder<ButtonBuilder>().addComponents(
-                    ...choices.map((o, i) => new ButtonBuilder()
-                        .setCustomId(storyChoiceEnumValues[i])
-                        .setLabel(o)
-                        .setStyle(ButtonStyle.Secondary)),
-                ),
-            ],
-        }))
+        return reply.then((reply) =>
+            reply.edit({
+                content: story,
+                components: [
+                    new ActionRowBuilder<ButtonBuilder>().addComponents(
+                        ...choices.map((o, i) =>
+                            new ButtonBuilder()
+                                .setCustomId(storyChoiceEnumValues[i])
+                                .setLabel(o)
+                                .setStyle(ButtonStyle.Secondary),
+                        ),
+                    ),
+                ],
+            }),
+        )
     }
 
     @interaction(StoryChoiceInteractions.Choice1)
     @interaction(StoryChoiceInteractions.Choice2)
     @interaction(StoryChoiceInteractions.Choice3)
     @interaction(StoryChoiceInteractions.Choice4)
-    public async choiceHandler(interaction: Interaction): Promise<void> {
-        if ( ! (interaction instanceof ButtonInteraction) || ! interaction.message.inGuild()) {
+    async choiceHandler(interaction: Interaction): Promise<void> {
+        if (!(interaction instanceof ButtonInteraction) || !interaction.message.inGuild()) {
             return
         }
 
@@ -121,14 +124,17 @@ export default class CyaCommand {
     }
 
     private async replyToChoice(interaction: ButtonInteraction) {
-        const reply = interaction.deferReply({ withResponse: true }).then(r => r.resource!.message!)
+        const reply = interaction
+            .deferReply({ withResponse: true })
+            .then((r) => r.resource!.message!)
 
         const assistantOutput = interaction.message.content
         let edited = assistantOutput + '\n'
         const choiceIndex = interaction.customId.replaceAll(/[^0-9]+/g, '')
         let userInput: string
 
-        const buttons = interaction.message.components.find(c => 'components' in c)!.components as ButtonComponent[]
+        const buttons = interaction.message.components.find((c) => 'components' in c)!
+            .components as ButtonComponent[]
 
         for (const i in buttons) {
             let line = `[${parseInt(i) + 1}]: ${buttons[i].label}`
@@ -139,13 +145,17 @@ export default class CyaCommand {
             edited = edited + '\n' + line
         }
 
-        const res = await this.openai.getChatCompletionAndStartReply(interaction.message, [
-            { role: 'system', content: constraint },
-            { role: 'assistant', content: assistantOutput },
-            { role: 'user', content: userInput! },
-        ], reply)
+        const res = await this.openai.getChatCompletionAndStartReply(
+            interaction.message,
+            [
+                { role: 'system', content: constraint },
+                { role: 'assistant', content: assistantOutput },
+                { role: 'user', content: userInput! },
+            ],
+            reply,
+        )
 
-        if ( ! res) {
+        if (!res) {
             return
         }
 
@@ -154,10 +164,12 @@ export default class CyaCommand {
             content: story,
             components: [
                 new ActionRowBuilder<ButtonBuilder>().addComponents(
-                    ...choices.map((o, i) => new ButtonBuilder()
-                        .setCustomId(storyChoiceEnumValues[i])
-                        .setLabel(o)
-                        .setStyle(ButtonStyle.Secondary)),
+                    ...choices.map((o, i) =>
+                        new ButtonBuilder()
+                            .setCustomId(storyChoiceEnumValues[i])
+                            .setLabel(o)
+                            .setStyle(ButtonStyle.Secondary),
+                    ),
                 ),
             ],
         })

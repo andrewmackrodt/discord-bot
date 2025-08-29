@@ -1,14 +1,16 @@
 import type { Message } from 'discord.js'
 import { injectable } from 'tsyringe'
+
 import { AbstractTopicCommand } from './AbstractTopicCommand'
 import { command } from '../../../utils/command'
 import { OpenAIService } from '../services/OpenAIService'
 
-const template = 'generate a satirical news story about {{ topic }}, it should be one paragraph and less than 1000 characters'
+const template =
+    'generate a satirical news story about {{ topic }}, it should be one paragraph and less than 1000 characters'
 
 @injectable()
-export default class NewsCommand extends AbstractTopicCommand{
-    public constructor(openai: OpenAIService) {
+export default class NewsCommand extends AbstractTopicCommand {
+    constructor(openai: OpenAIService) {
         super(openai)
     }
 
@@ -19,7 +21,7 @@ export default class NewsCommand extends AbstractTopicCommand{
         separator: null,
         args: { topic: {} },
     })
-    public async news(message: Message<true>, topic?: string) {
+    async news(message: Message<true>, topic?: string) {
         return this.sendTopicResponse(message, template, topic)
     }
 }

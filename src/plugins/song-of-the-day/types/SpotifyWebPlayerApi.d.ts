@@ -5,10 +5,8 @@ declare module 'spotify-web-player' {
         isAnonymous: boolean
     }
 
-    export type WebPlayerApiResponse<K extends string, S> = {
-        data: {
-            [key in K]: S
-        }
+    export interface WebPlayerApiResponse<K extends string, S> {
+        data: Record<K, S>
         extensions: object
     }
 

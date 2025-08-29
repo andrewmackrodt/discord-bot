@@ -1,5 +1,6 @@
-import type { MessageEditOptions, TextChannel , Interaction, Message } from 'discord.js'
+import type { Interaction, Message, MessageEditOptions, TextChannel } from 'discord.js'
 import { injectable } from 'tsyringe'
+
 import { AbstractSongOfTheDayHistoryCommand } from './AbstractSongOfTheDayHistoryCommand'
 import { command } from '../../../utils/command'
 import { interaction } from '../../../utils/interaction'
@@ -15,13 +16,16 @@ const DEFAULT_LIMIT = 5
 
 @injectable()
 export default class SongOfTheDayNominationsCommand extends AbstractSongOfTheDayHistoryCommand {
-    protected get nextInteractionCustomId(): string { return Interactions.NominationsNext }
-    protected get prevInteractionCustomId(): string { return Interactions.NominationsPrev }
-
-    public constructor(
-        protected readonly repository: SongOfTheDayRepository,
-    ) {
+    constructor(protected readonly repository: SongOfTheDayRepository) {
         super(repository)
+    }
+
+    protected get nextInteractionCustomId(): string {
+        return Interactions.NominationsNext
+    }
+
+    protected get prevInteractionCustomId(): string {
+        return Interactions.NominationsPrev
     }
 
     @command('sotd nominations', {
@@ -30,13 +34,13 @@ export default class SongOfTheDayNominationsCommand extends AbstractSongOfTheDay
             username: {},
         },
     })
-    public async nominations(message: Message<true>, userId?: string): Promise<Message> {
+    async nominations(message: Message<true>, userId?: string): Promise<Message> {
         return this.sendInitialHistoryMessage(message, userId)
     }
 
     @interaction(Interactions.NominationsNext)
     @interaction(Interactions.NominationsPrev)
-    public async changePageInteraction(interaction: Interaction): Promise<void> {
+    async changePageInteraction(interaction: Interaction): Promise<void> {
         return this._changePageInteraction(interaction)
     }
 
@@ -58,30 +62,40 @@ export default class SongOfTheDayNominationsCommand extends AbstractSongOfTheDay
             return
         }
 
-        const index = 1 + ((page - 1) * DEFAULT_LIMIT)
+        const index = 1 + (page - 1) * DEFAULT_LIMIT
 
         return {
-            embeds: [{
-                title: ':notepad_spiral: **Song of the Day Nominations History**',
-                description: JSON.stringify(options).replace(/["{}]/g, '').replace(/:/g, ': ').replace(/,/g, ' | '),
-                fields: rows.map((row, i) => ([
-                    {
-                        name: '#',
-                        value: (index + i).toString(10),
-                        inline: true,
-                    },
-                    {
-                        name: 'date',
-                        value: row.date,
-                        inline: true,
-                    },
-                    {
-                        name: 'username',
-                        value: (row.user_id ? channel.members.get(row.user_id)?.displayName : undefined) ?? row.username,
-                        inline: true,
-                    },
-                ])).flat(),
-            }],
+            embeds: [
+                {
+                    title: ':notepad_spiral: **Song of the Day Nominations History**',
+                    description: JSON.stringify(options)
+                        .replace(/["{}]/g, '')
+                        .replace(/:/g, ': ')
+                        .replace(/,/g, ' | '),
+                    fields: rows
+                        .map((row, i) => [
+                            {
+                                name: '#',
+                                value: (index + i).toString(10),
+                                inline: true,
+                            },
+                            {
+                                name: 'date',
+                                value: row.date,
+                                inline: true,
+                            },
+                            {
+                                name: 'username',
+                                value:
+                                    (row.user_id
+                                        ? channel.members.get(row.user_id)?.displayName
+                                        : undefined) ?? row.username,
+                                inline: true,
+                            },
+                        ])
+                        .flat(),
+                },
+            ],
         }
     }
 }

@@ -2,7 +2,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm'
 import { TableColumn } from 'typeorm/schema-builder/table/TableColumn'
 
 export class SongsTableAddPlaycount1693952391000 implements MigrationInterface {
-    public async up(queryRunner: QueryRunner): Promise<void> {
+    async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.addColumns('songs', [
             new TableColumn({
                 name: 'message_id',
@@ -32,7 +32,7 @@ export class SongsTableAddPlaycount1693952391000 implements MigrationInterface {
         ])
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
+    async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.dropColumns('songs', [
             'updated_at',
             'created_at',

@@ -1,6 +1,6 @@
 {
     "name": "Node.js",
-    "image": "node:20-bookworm",
+    "image": "node:22-trixie",
     "customizations": {
         "vscode": {
             "extensions": [

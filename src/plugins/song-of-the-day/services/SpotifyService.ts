@@ -1,4 +1,5 @@
 import SpotifyWebApi from 'spotify-web-api-node'
+
 import { component } from '../../../utils/di'
 import type { SongOfTheDaySettings } from '../models/SongOfTheDaySettings'
 import { SongOfTheDayRepository } from '../repositories/SongOfTheDayRepository'
@@ -13,22 +14,16 @@ interface SpotifyClient {
 export class SpotifyService {
     private readonly cache: Record<string, SpotifyClient> = {}
 
-    public constructor(
-        private readonly repository: SongOfTheDayRepository,
-    ) {
-    }
+    constructor(private readonly repository: SongOfTheDayRepository) {}
 
     /**
-     * Developer Dashboard:
-     * https://developer.spotify.com/dashboard/applications
+     * Developer Dashboard: https://developer.spotify.com/dashboard/applications
      *
-     * Authorization Code Flow:
-     * https://accounts.spotify.com/en/authorize?response_type=code
-     *   &client_id={{ SPOTIFY_CLIENT_ID }}
-     *   &redirect_uri=http:%2F%2Flocalhost:8080
-     *   &scope=playlist-read-collaborative%20playlist-modify-public%20playlist-modify-private
+     * Authorization Code Flow: https://accounts.spotify.com/en/authorize?response_type=code
+     * &client_id={{ SPOTIFY_CLIENT_ID }} &redirect_uri=http:%2F%2Flocalhost:8080
+     * &scope=playlist-read-collaborative%20playlist-modify-public%20playlist-modify-private
      */
-    public async getSdk(guildId: string): Promise<SpotifyClient | null> {
+    async getSdk(guildId: string): Promise<SpotifyClient | null> {
         let client = this.cache[guildId]
         let isNewConnection = false
 
@@ -51,7 +46,7 @@ export class SpotifyService {
             }
         }
 
-        if ( ! client) {
+        if (!client) {
             return null
         }
 
@@ -59,7 +54,9 @@ export class SpotifyService {
             const { body: tokenResponse } = await client.sdk.refreshAccessToken()
             client.sdk.setAccessToken(tokenResponse.access_token)
             client.tokenExpiresAt = new Date()
-            client.tokenExpiresAt.setSeconds(client.tokenExpiresAt.getSeconds() + tokenResponse.expires_in - 30)
+            client.tokenExpiresAt.setSeconds(
+                client.tokenExpiresAt.getSeconds() + tokenResponse.expires_in - 30,
+            )
 
             if (isNewConnection) {
                 const { body: user } = await client.sdk.getMe()

@@ -1,5 +1,6 @@
 import type { Message } from 'discord.js'
-import { mock, when, It } from 'strong-mock'
+import { It, mock, when } from 'strong-mock'
+
 import RollPlugin from './index'
 
 describe('replyRoll()', () => {
@@ -9,7 +10,7 @@ describe('replyRoll()', () => {
         when(() => mockMessage.reply(matcher)).thenResolve(mockMessage)
         await new RollPlugin().replyRoll(mockMessage, input)
         const [total, rolls] = matcher.value!.replaceAll(/[^0-9=+]/g, '').split('=')
-        return { total: parseInt(total), rolls: rolls.split('+').map(s => parseInt(s)) }
+        return { total: parseInt(total), rolls: rolls.split('+').map((s) => parseInt(s)) }
     }
 
     afterEach(() => {

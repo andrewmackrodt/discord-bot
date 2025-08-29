@@ -12,13 +12,16 @@ env:
   PRIMARY_NODE_VERSION: 22
 
 jobs:
-  eslint:
-    name: eslint
+  check-types:
+    name: check-types
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - run: corepack enable
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
 
       - name: Setup Node.js v${{ env.PRIMARY_NODE_VERSION }}
         uses: actions/setup-node@v4
@@ -27,7 +30,30 @@ jobs:
           cache: pnpm
 
       - name: Install package dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies --ignore-scripts
+
+      - name: Check for type errors
+        run: pnpm run build:check
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js v${{ env.PRIMARY_NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install package dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies --ignore-scripts
 
       - if: ${{ env.GITEA_ACTIONS != 'true' }}
         uses: reviewdog/action-setup@v1
@@ -35,33 +61,31 @@ jobs:
           reviewdog_version: latest
 
       - if: ${{ env.GITEA_ACTIONS != 'true' && github.event_name == 'pull_request' }}
-        name: ESLint GitHub PR Review
+        name: Check for lint errors (GitHub Pull Request)
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm run lint:review
+        run: pnpm run lint:pr
 
       - if: ${{ env.GITEA_ACTIONS != 'true' && github.event_name == 'push' }}
-        name: ESLint GitHub Check
+        name: Check for lint errors (GitHub Push)
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm run lint:check
+        run: pnpm run lint:push
 
       - if: ${{ env.GITEA_ACTIONS == 'true' }}
-        name: ESLint
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm run lint
+        name: Check for lint errors
+        run: pnpm run lint:check
 
-  jest:
-    name: jest
+  license-checker:
+    name: license-checker
     runs-on: ubuntu-latest
     steps:
-      - name: Install system dependencies
-        run: sudo apt install -qqy imagemagick
-
       - uses: actions/checkout@v4
 
-      - run: corepack enable
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
 
       - name: Setup Node.js v${{ env.PRIMARY_NODE_VERSION }}
         uses: actions/setup-node@v4
@@ -70,7 +94,52 @@ jobs:
           cache: pnpm
 
       - name: Install package dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies --ignore-scripts
 
-      - name: Jest
+      - name: Check for license violations
+        run: pnpm run license:check
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install system dependencies
+        run: sudo apt install -qqy imagemagick
+
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js v${{ env.PRIMARY_NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install package dependencies
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
+
+      - name: Run test suite
         run: pnpm test
+
+  vulnerability-checker:
+    name: vulnerability-checker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js v${{ env.PRIMARY_NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+
+      - name: Check for critical vulnerability
+        run: pnpm run vulnerability:check

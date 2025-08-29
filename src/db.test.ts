@@ -1,8 +1,10 @@
 import { promises as fs } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+
 import { DataSource } from 'typeorm'
 import { AbstractLogger } from 'typeorm/logger/AbstractLogger'
+
 import { sqliteConnectionOptions } from './db'
 
 const ddlRegExp = /^(insert|update|delete|create|alter|drop)/i
@@ -20,9 +22,9 @@ describe('DataSource', () => {
     })
 
     afterEach(async () => {
-        const exists = await fs.stat(database).catch(err => console.error(err))
+        const exists = await fs.stat(database).catch((err) => console.error(err))
         if (exists) {
-            await fs.unlink(database).catch(err => console.error(err))
+            await fs.unlink(database).catch((err) => console.error(err))
         }
     })
 
@@ -31,14 +33,16 @@ describe('DataSource', () => {
         await dataSource.runMigrations()
         let isSchemaChanges = false
         dataSource.setOptions({
-            logger: new class extends AbstractLogger {
-                protected writeLog(): void {}
-                public logQuery(query: string, parameters?: any[]) {
+            logger: new (class extends AbstractLogger {
+                logQuery(query: string, parameters?: any[]) {
                     if (ddlRegExp.exec(query) != null) {
                         isSchemaChanges = true
                     }
                 }
-            },
+
+                // eslint-disable-next-line @typescript-eslint/no-empty-function
+                protected writeLog(): void {}
+            })(),
             logging: true,
         })
         await dataSource.synchronize()

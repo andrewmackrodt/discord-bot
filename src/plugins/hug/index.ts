@@ -1,4 +1,5 @@
 import type { Message } from 'discord.js'
+
 import { command } from '../../utils/command'
 import { lookupUserId, sendGenericErrorReply } from '../../utils/plugin'
 
@@ -12,9 +13,15 @@ export default class HugPlugin {
             initiator: {},
         },
     })
-    public async replyHug(message: Message<true>, recipient: string, initiator?: string): Promise<any> {
+    async replyHug(message: Message<true>, recipient: string, initiator?: string): Promise<any> {
         return this.sendMessage(
-            ':people_hugging:', 'hugs', ' while sobbing "I\'m so alone"', message, recipient, initiator)
+            ':people_hugging:',
+            'hugs',
+            ' while sobbing "I\'m so alone"',
+            message,
+            recipient,
+            initiator,
+        )
     }
 
     @command('slap', {
@@ -26,9 +33,15 @@ export default class HugPlugin {
             initiator: {},
         },
     })
-    public async replySlap(message: Message<true>, recipient: string, initiator?: string): Promise<any> {
+    async replySlap(message: Message<true>, recipient: string, initiator?: string): Promise<any> {
         return this.sendMessage(
-            ':wave:', 'slaps', ' while grinning manically', message, recipient, initiator)
+            ':wave:',
+            'slaps',
+            ' while grinning manically',
+            message,
+            recipient,
+            initiator,
+        )
     }
 
     protected async sendMessage(
@@ -40,9 +53,11 @@ export default class HugPlugin {
         initiator?: string,
     ): Promise<any> {
         const recipientId = await lookupUserId(message.channel, recipient)
-        const initiatorId = initiator ? await lookupUserId(message.channel, initiator) : message.author.id
+        const initiatorId = initiator
+            ? await lookupUserId(message.channel, initiator)
+            : message.author.id
 
-        if ( ! recipientId || ! initiatorId) {
+        if (!recipientId || !initiatorId) {
             return sendGenericErrorReply(message)
         }
 

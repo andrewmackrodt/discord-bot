@@ -1,35 +1,48 @@
-import type { MessageCreateOptions, MessageEditOptions, Interaction, Message, TextChannel } from 'discord.js'
+import type {
+    Interaction,
+    Message,
+    MessageCreateOptions,
+    MessageEditOptions,
+    TextChannel,
+} from 'discord.js'
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js'
+
+import { suppressInteractionReply } from '../../../utils/interaction'
 import { error, lookupUserId } from '../../../utils/plugin'
 import type { PaginatedOptionalUserQuery } from '../helpers'
-import { suppressInteractionReply } from '../helpers'
 import type { SongOfTheDayRepository } from '../repositories/SongOfTheDayRepository'
 
 export abstract class AbstractSongOfTheDayHistoryCommand {
+    protected constructor(protected readonly repository: SongOfTheDayRepository) {}
     protected abstract get nextInteractionCustomId(): string
+
     protected abstract get prevInteractionCustomId(): string
 
-    protected abstract getMessageEmbeds(channel: TextChannel, options?: PaginatedOptionalUserQuery): Promise<Pick<MessageEditOptions, 'embeds'> | undefined>
+    protected abstract getMessageEmbeds(
+        channel: TextChannel,
+        options?: PaginatedOptionalUserQuery,
+    ): Promise<Pick<MessageEditOptions, 'embeds'> | undefined>
 
-    protected constructor(
-        protected readonly repository: SongOfTheDayRepository,
-    ) {
-    }
-
-    protected async sendInitialHistoryMessage(message: Message<true>, userId?: string): Promise<Message> {
+    protected async sendInitialHistoryMessage(
+        message: Message<true>,
+        userId?: string,
+    ): Promise<Message> {
         const options: PaginatedOptionalUserQuery = { page: 1 }
 
         if (typeof userId === 'string') {
             options.userId = await lookupUserId(message.channel, userId)
 
-            if ( ! options.userId) {
+            if (!options.userId) {
                 return message.channel.send(error(`unknown user: ${userId}`))
             }
         }
 
-        const embed = await this.getMessageEmbeds(message.channel as TextChannel, options) as MessageCreateOptions
+        const embed = (await this.getMessageEmbeds(
+            message.channel as TextChannel,
+            options,
+        )) as MessageCreateOptions
 
-        if ( ! embed) {
+        if (!embed) {
             return message.channel.send('history is empty')
         }
 
@@ -52,9 +65,7 @@ export abstract class AbstractSongOfTheDayHistoryCommand {
     }
 
     protected async _changePageInteraction(interaction: Interaction): Promise<void> {
-        if ( ! (interaction instanceof ButtonInteraction) ||
-            ! interaction.message.inGuild()
-        ) {
+        if (!(interaction instanceof ButtonInteraction) || !interaction.message.inGuild()) {
             return
         }
 
@@ -62,7 +73,7 @@ export abstract class AbstractSongOfTheDayHistoryCommand {
         const pageStr = /page(?: |: ?)([0-9]+)/.exec(description)?.[1]
         let page: number
 
-        if ( ! pageStr || isNaN((page = parseInt(pageStr, 10)))) {
+        if (!pageStr || isNaN((page = parseInt(pageStr, 10)))) {
             return
         }
 

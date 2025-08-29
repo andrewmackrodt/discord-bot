@@ -1,24 +1,13 @@
 import type { Interaction, Message, MessageCreateOptions } from 'discord.js'
 import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle } from 'discord.js'
+
 import { command } from '../../utils/command'
-import { interaction } from '../../utils/interaction'
-import { suppressInteractionReply } from '../song-of-the-day/helpers'
+import { interaction, suppressInteractionReply } from '../../utils/interaction'
 
 enum Interactions {
     Hi = 'hilo.hi',
     Lo = 'hilo.lo',
     Restart = 'hilo.restart',
-}
-
-function getNumber(content: string, search: RegExp): number | null {
-    const match = search.exec(content)?.[1]
-    let value: number
-
-    if ( ! match || isNaN((value = parseInt(match)))) {
-        return null
-    }
-
-    return value
 }
 
 export default class HiLoPlugin {
@@ -27,23 +16,21 @@ export default class HiLoPlugin {
         title: 'Hi-Lo',
         description: 'Guess if the next number is higher or lower.',
     })
-    public async createHiLo(message: Message<true>): Promise<any> {
+    async createHiLo(message: Message<true>): Promise<any> {
         return message.channel.send(this.getNewGameMessage())
     }
 
     @interaction(Interactions.Hi)
     @interaction(Interactions.Lo)
-    public async hiLoInteraction(interaction: Interaction): Promise<void> {
-        if ( ! (interaction instanceof ButtonInteraction) ||
-            ! interaction.message.inGuild()
-        ) {
+    async hiLoInteraction(interaction: Interaction): Promise<void> {
+        if (!(interaction instanceof ButtonInteraction) || !interaction.message.inGuild()) {
             return
         }
 
         const content = interaction.message.content
         const current = getNumber(content, /current number:? ([0-9]+)/i)
-        const streak  = getNumber(content, /streak:? ([0-9]+)/i)
-        const max     = getNumber(content, /range:? 1-([0-9]+)/i)
+        const streak = getNumber(content, /streak:? ([0-9]+)/i)
+        const max = getNumber(content, /range:? 1-([0-9]+)/i)
 
         if (current === null || streak === null || max === null) {
             return suppressInteractionReply(interaction)
@@ -58,8 +45,8 @@ export default class HiLoPlugin {
         const verb = next > current ? 'higher' : 'lower'
 
         const isCorrect =
-            interaction.customId === Interactions.Hi && (next > current) ||
-            interaction.customId === Interactions.Lo && (next < current)
+            (interaction.customId === Interactions.Hi && next > current) ||
+            (interaction.customId === Interactions.Lo && next < current)
 
         if (isCorrect) {
             await interaction.message.edit({
@@ -92,15 +79,13 @@ export default class HiLoPlugin {
     }
 
     @interaction(Interactions.Restart)
-    public async restartInteraction(interaction: Interaction): Promise<void> {
-        if ( ! (interaction instanceof ButtonInteraction) ||
-            ! interaction.message.inGuild()
-        ) {
+    async restartInteraction(interaction: Interaction): Promise<void> {
+        if (!(interaction instanceof ButtonInteraction) || !interaction.message.inGuild()) {
             return
         }
 
         const content = interaction.message.content
-        const max     = getNumber(content, /range:? 1-([0-9]+)/i)
+        const max = getNumber(content, /range:? 1-([0-9]+)/i)
 
         if (max === null) {
             return suppressInteractionReply(interaction)
@@ -138,4 +123,15 @@ export default class HiLoPlugin {
             ],
         }
     }
+}
+
+function getNumber(content: string, search: RegExp): number | null {
+    const match = search.exec(content)?.[1]
+    let value: number
+
+    if (!match || isNaN((value = parseInt(match)))) {
+        return null
+    }
+
+    return value
 }

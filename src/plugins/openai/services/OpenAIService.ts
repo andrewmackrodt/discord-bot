@@ -3,11 +3,13 @@ import { AttachmentBuilder } from 'discord.js'
 import { OpenAI } from 'openai'
 import { BadRequestError } from 'openai/error'
 import type { ChatCompletionMessageParam } from 'openai/resources/chat'
+
 import { ConfigurationError } from '../../../utils/command'
 import { component } from '../../../utils/di'
 import { error } from '../../../utils/plugin'
 
-const CONFIG_ERROR_TEXT = 'the openai plugin is not correctly configured, please contact the server admin'
+const CONFIG_ERROR_TEXT =
+    'the openai plugin is not correctly configured, please contact the server admin'
 
 interface ReplyContent {
     reply: Promise<Message>
@@ -19,7 +21,7 @@ export class OpenAIService {
     private _isSupported?: boolean
     private _openai?: OpenAI
 
-    public isSupported(): boolean {
+    isSupported(): boolean {
         if (typeof this._isSupported === 'undefined') {
             this._isSupported = Boolean(process.env.OPENAI_API_KEY)
         }
@@ -27,7 +29,7 @@ export class OpenAIService {
         return this._isSupported
     }
 
-    public async getChatCompletionAndStartReply(
+    async getChatCompletionAndStartReply(
         message: Message,
         prompts: ChatCompletionMessageParam[],
         reply?: Promise<Message>,
@@ -50,31 +52,33 @@ export class OpenAIService {
                 user: message.author.id,
             })
             console.info('openai: usage', res.usage)
-            const content = res.choices.map(choice => choice.message.content?.trim()).join(' ')
+            const content = res.choices.map((choice) => choice.message.content?.trim()).join(' ')
             return { reply: messageReply, content }
         } catch (e) {
-            this.replyWithErrorMessage(messageReply, e)
+            await this.replyWithErrorMessage(messageReply, e)
         }
     }
 
-    public async sendChatCompletionAndReply(
+    async sendChatCompletionAndReply(
         message: Message,
         prompts: ChatCompletionMessageParam[],
         prefix = '',
     ) {
         const res = await this.getChatCompletionAndStartReply(message, prompts)
-        if ( ! res) {
+        if (!res) {
             return
         }
         const { reply, content } = res
-        return reply.then(reply => reply.edit(prefix + content))
+        return reply.then((reply) => reply.edit(prefix + content))
     }
 
-    public async sendImageGenerationAndReply(message: Message, description: string) {
+    async sendImageGenerationAndReply(message: Message, description: string) {
         const sdk = this.getSdk()
 
         // noinspection ES6MissingAwait
-        const replyPromise = message.reply(`:crayon: ${message.client.user.username} is fetching their crayons ...`)
+        const replyPromise = message.reply(
+            `:crayon: ${message.client.user.username} is fetching their crayons ...`,
+        )
 
         try {
             const res = await sdk.images.generate({
@@ -87,24 +91,24 @@ export class OpenAIService {
             })
             const content = description.replaceAll('\\', '\\\\').replaceAll('*', '\\*')
             const imageB64Json = res.data?.[0].b64_json
-            if ( ! imageB64Json) {
+            if (!imageB64Json) {
                 return this.replyWithErrorMessage(replyPromise, null)
             }
-            replyPromise.then(reply => reply.edit({
+            const reply = await replyPromise
+            await reply.edit({
                 content: `**${content}**`,
                 files: [
-                    new AttachmentBuilder(Buffer.from(imageB64Json, 'base64'))
-                        .setName('image.png'),
+                    new AttachmentBuilder(Buffer.from(imageB64Json, 'base64')).setName('image.png'),
                 ],
-            }))
+            })
         } catch (e) {
-            this.replyWithErrorMessage(replyPromise, e)
+            await this.replyWithErrorMessage(replyPromise, e)
         }
     }
 
-    public getSdk(): OpenAI {
-        if ( ! this._openai) {
-            if ( ! this.isSupported()) {
+    getSdk(): OpenAI {
+        if (!this._openai) {
+            if (!this.isSupported()) {
                 throw new ConfigurationError(CONFIG_ERROR_TEXT)
             }
             this._openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -113,17 +117,20 @@ export class OpenAIService {
         return this._openai
     }
 
-    private replyWithErrorMessage(messageReply: Promise<Message<boolean>>, e: unknown) {
+    private async replyWithErrorMessage(messageReply: Promise<Message<boolean>>, e: unknown) {
         console.error('openai: error', e)
         let message = 'an error occurred please try again later'
         if (
             e instanceof BadRequestError &&
-            typeof e.error === 'object' && e.error !== null &&
-            'message' in e.error && typeof e.error.message === 'string'
+            typeof e.error === 'object' &&
+            e.error !== null &&
+            'message' in e.error &&
+            typeof e.error.message === 'string'
         ) {
             message = e.error.message
         }
         const content = error(message)
-        messageReply.then(reply => reply.edit(content))
+        const reply = await messageReply
+        await reply.edit(content)
     }
 }

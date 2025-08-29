@@ -17,6 +17,7 @@ out/
 !.idea/discord-bot.iml
 !.idea/jsLibraryMappings.xml
 !.idea/modules.xml
+!.idea/prettier.xml
 !.idea/sqldialects.xml.xml
 
 # vscode

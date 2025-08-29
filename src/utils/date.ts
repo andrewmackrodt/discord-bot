@@ -37,8 +37,7 @@ export function getYmd(date: Date | string = new Date()): string {
 }
 
 export function isWorkingDay(date: Date = new Date()): boolean {
-    return date.getDay() !== 0 && date.getDay() !== 6 &&
-        ! bankHolidays.includes(getYmd(date))
+    return date.getDay() !== 0 && date.getDay() !== 6 && !bankHolidays.includes(getYmd(date))
 }
 
 export function getDaysBetween(date1: Date | string, date2: Date | string): number {

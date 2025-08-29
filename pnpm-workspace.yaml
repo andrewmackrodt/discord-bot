@@ -1,0 +1,6 @@
+onlyBuiltDependencies:
+  - '@swc/core'
+  - better-sqlite3
+  - bufferutil
+  - unrs-resolver
+  - utf-8-validate

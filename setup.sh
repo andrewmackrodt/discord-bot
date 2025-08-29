@@ -31,7 +31,7 @@ function install_node() {
   if [[ "$nvmVersion" == "" ]]; then
     echo "yes"
     echo "installing nvm .."
-    curl -fsSL -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash >/dev/null
+    curl -fsSL -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash >/dev/null
     if [[ "${NVM_DIR:-}" == "" ]]; then
       export NVM_DIR="$HOME/.nvm"
     fi
