@@ -5,9 +5,7 @@ import type { BetterSqlite3ConnectionOptions } from 'typeorm/driver/better-sqlit
 
 const appDir = path.dirname(__dirname)
 const srcDir = __dirname
-const isTs = Boolean(
-    process.env.TS_NODE_DEV || (process as any)[Symbol.for('ts-node.register.instance')],
-)
+const isTs = __filename.endsWith('.ts')
 const ext = isTs ? 'ts' : 'js'
 
 export const sqliteConnectionOptions: BetterSqlite3ConnectionOptions = {

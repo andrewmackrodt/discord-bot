@@ -1,7 +1,6 @@
-import { mkdirSync } from 'node:fs'
+import { globSync, mkdirSync } from 'node:fs'
 
 import { copySync } from 'fs-extra'
-import { glob } from 'glob'
 import { exec } from 'shelljs'
 
 const distPath = `${__dirname}/out`
@@ -17,7 +16,7 @@ exec(['tsc',
     })
 // prettier-enable
 
-glob.sync(`${__dirname}/src/plugins/*/assets`).map((filepath) => {
+globSync(`${__dirname}/src/plugins/*/assets`).map((filepath) => {
     const dest = `${distPath}/` + filepath.split('/').slice(-4).join('/')
     mkdirSync(dest)
     copySync(filepath, dest)

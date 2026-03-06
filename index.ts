@@ -1,10 +1,9 @@
 import 'reflect-metadata'
 
-import { existsSync } from 'node:fs'
+import { existsSync, globSync } from 'node:fs'
 import path from 'node:path'
 
 import dotenv from 'dotenv'
-import { glob } from 'glob'
 import { container } from 'tsyringe'
 
 import { Client } from './src/Client'
@@ -21,7 +20,7 @@ function requirePlugins(): Plugin[] {
     const pluginsPath = path.resolve(__dirname, 'src/plugins')
 
     /* eslint-disable @typescript-eslint/no-require-imports */
-    glob.sync(`${pluginsPath}/*/index.${ext}`).map((filepath) => {
+    globSync(`${pluginsPath}/*/index.${ext}`).map((filepath) => {
         const augmentsFilepath = path.join(path.dirname(filepath), `augments.${ext}`)
 
         if (existsSync(augmentsFilepath)) {

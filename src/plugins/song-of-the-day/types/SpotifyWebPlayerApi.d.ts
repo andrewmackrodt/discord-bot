@@ -10,68 +10,6 @@ declare module 'spotify-web-player' {
         extensions: object
     }
 
-    interface Playlist {
-        __typename: 'Playlist'
-        uri: string
-        name: string
-        description: string
-        ownerV2: {
-            data: {
-                __typename: 'User'
-                name: string
-            }
-        }
-        images: {
-            items: {
-                sources: {
-                    url: string
-                    width: unknown
-                    height: unknown
-                }[]
-            }[]
-        }
-    }
-
-    interface ImageSource {
-        url: string
-        width: number
-        height: number
-    }
-
-    interface Album {
-        id: string
-        uri: string
-        name: string
-        type: string
-        copyright: {
-            items: {
-                type: string
-                text: string
-            }[]
-        }
-        date: {
-            year: number
-            month: number
-            day: number
-            precision: string
-        }
-        coverArt: {
-            sources: ImageSource[]
-        }
-        tracks: {
-            totalCount: number
-        }
-        label: string
-        playability: {
-            playable: boolean
-            reason: string
-        }
-        sharingInfo: {
-            shareId: string
-            shareUrl: string
-        }
-    }
-
     export interface QueryArtistOverviewResponse {
         __typename: 'Artist'
         id: string
@@ -427,6 +365,68 @@ declare module 'spotify-web-player' {
                     }
                 }
             }[]
+        }
+    }
+
+    interface Playlist {
+        __typename: 'Playlist'
+        uri: string
+        name: string
+        description: string
+        ownerV2: {
+            data: {
+                __typename: 'User'
+                name: string
+            }
+        }
+        images: {
+            items: {
+                sources: {
+                    url: string
+                    width: unknown
+                    height: unknown
+                }[]
+            }[]
+        }
+    }
+
+    interface ImageSource {
+        url: string
+        width: number
+        height: number
+    }
+
+    interface Album {
+        id: string
+        uri: string
+        name: string
+        type: string
+        copyright: {
+            items: {
+                type: string
+                text: string
+            }[]
+        }
+        date: {
+            year: number
+            month: number
+            day: number
+            precision: string
+        }
+        coverArt: {
+            sources: ImageSource[]
+        }
+        tracks: {
+            totalCount: number
+        }
+        label: string
+        playability: {
+            playable: boolean
+            reason: string
+        }
+        sharingInfo: {
+            shareId: string
+            shareUrl: string
         }
     }
 }
